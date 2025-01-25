@@ -13,6 +13,8 @@ import { ArrowLeft, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AddressAutocomplete } from "./AdressAutoComplete";
 import { addStudent, Student } from "../lib/api";
+import { supabase } from "../lib/supabase";
+import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -74,20 +76,21 @@ export default function AddStudent() {
       address: address ?? "",
     }));
   };
-  // const handleSignUp = async (credentials: SignUpWithPasswordCredentials) => {
-  //   if (!("email" in credentials)) return;
-  //   const { email, password } = credentials;
-  //   const { error, data } = await supabase.auth.signUp({
-  //     email,
-  //     password,
-  //   });
-  //   if (error) console.error(error.message);
-  //   console.log(data);
-  // };
+  const handleSignUp = async (credentials: SignUpWithPasswordCredentials) => {
+    if (!("email" in credentials)) return;
+    const { email, password } = credentials;
+    const { error, data } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) console.error(error.message);
+    console.log(data);
+  };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     addStudent(formData as Student);
+    handleSignUp(formData as Student)
     navigate("/dashboard");
   };
 

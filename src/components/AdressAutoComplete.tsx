@@ -1,11 +1,10 @@
-import { TextField } from "@mui/material";
 import { useState } from "react";
+import { TextField } from "@mui/material";
 import PlacesAutocomplete, {
   geocodeByAddress,
   getLatLng,
 } from "react-places-autocomplete";
 
-// School's fixed coordinates
 const SCHOOL_LOCATION = {
   lat: 43.25983,
   lng: -2.936812,
@@ -15,14 +14,19 @@ export const AddressAutocomplete = ({
   onAddressChange,
   onDistanceChange,
 }: {
-  onAddressChange: (address: string) => void;
+  onAddressChange: (address: string | undefined) => void;
   onDistanceChange: (distance: number) => void;
 }) => {
   const [address, setAddress] = useState("");
 
-  // Handle address selection and biking distance calculation
   const handleSelect = async (selectedAddress: string) => {
     try {
+      // Check if Google Maps library is loaded
+      if (!window.google || !window.google.maps) {
+        console.error("Google Maps JavaScript library not loaded");
+        return;
+      }
+
       const results = await geocodeByAddress(selectedAddress);
       const { lat, lng } = await getLatLng(results[0]);
 
@@ -30,41 +34,51 @@ export const AddressAutocomplete = ({
       const service = new window.google.maps.DistanceMatrixService();
       service.getDistanceMatrix(
         {
-          origins: [SCHOOL_LOCATION],
+          origins: [{ lat: SCHOOL_LOCATION.lat, lng: SCHOOL_LOCATION.lng }],
           destinations: [{ lat, lng }],
           travelMode: window.google.maps.TravelMode.BICYCLING,
         },
         (response, status) => {
-          if (response && status === "OK") {
+          if (
+            response &&
+            status === window.google.maps.DistanceMatrixStatus.OK
+          ) {
             const element = response.rows[0].elements[0];
-            if (element.status === "OK") {
+
+            if (
+              element &&
+              element.status ===
+                window.google.maps.DistanceMatrixElementStatus.OK
+            ) {
               const distanceInMeters = element.distance.value;
-              const distanceInKm = distanceInMeters / 1000; // Convert meters to km
+              const distanceInKm = Number((distanceInMeters / 1000).toFixed(2));
+
               console.log(
-                `Biking distance from school to ${selectedAddress}: ${distanceInKm.toFixed(
-                  2
-                )} km`
+                `Biking distance from school to ${selectedAddress}: ${distanceInKm} km`
               );
+
               onDistanceChange(distanceInKm);
             } else {
               console.error(
-                "Error with DistanceMatrixService:",
-                element.status
+                "No route found or invalid destination:",
+                element?.status
               );
+              onDistanceChange(0);
             }
           } else {
             console.error("Error fetching biking distance:", status);
+            onDistanceChange(0);
           }
         }
       );
 
       // Update local address state
       setAddress(selectedAddress);
-
-      console.log("Selected address:", selectedAddress);
       onAddressChange(selectedAddress);
     } catch (error) {
       console.error("Error selecting address:", error);
+      onAddressChange(undefined);
+      onDistanceChange(0);
     }
   };
 
@@ -88,7 +102,7 @@ export const AddressAutocomplete = ({
               },
             })}
           />
-          <div className="autocomplete-dropdown-container z-0">
+          <div className="autocomplete-dropdown-container">
             {suggestions.map((suggestion) => (
               <div
                 {...getSuggestionItemProps(suggestion)}
