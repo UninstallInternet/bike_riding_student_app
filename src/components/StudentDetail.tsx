@@ -100,7 +100,7 @@ export default function StudentDetails() {
         </IconButton>
       </Box>
 
-      <Container maxWidth="sm">
+      <Container maxWidth="md">
         <Box
           sx={{
             display: "flex",
@@ -209,7 +209,7 @@ export default function StudentDetails() {
           </Link>
         </Box>
 
-        <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4 }}>
+        <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4,  px:2, borderRadius:4}}>
           <Paper
             elevation={0}
             sx={{
@@ -313,7 +313,7 @@ export default function StudentDetails() {
         </Box>
 
         <Box
-          sx={{ bgcolor: "#F5F7FA", pt: 4, pb: 12, border: "10 px solid red" }}
+          sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4,  px:2, borderRadius:4 }}
         >
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
             Ride History
@@ -353,7 +353,7 @@ export default function StudentDetails() {
                 borderBottomRightRadius: "inherit",
               }}
             >
-              Map placeholder
+              {/* Map placeholder */}
             </Box>
           </Paper>
         </Box>

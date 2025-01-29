@@ -25,6 +25,7 @@ import {
   UserPlus,
   Trash2,
   UserMinus,
+  X,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -44,6 +45,9 @@ import {
   DialogContentText,
   DialogActions,
   CircularProgress,
+  Chip,
+  Collapse,
+  TextField,
 } from "@mui/material";
 
 export default function TeacherDashboard() {
@@ -53,6 +57,11 @@ export default function TeacherDashboard() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showSearch, setShowSearch] = useState(false);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<boolean | null>(null);
 
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const navigate = useNavigate();
@@ -80,6 +89,22 @@ export default function TeacherDashboard() {
       });
     fetchUserData().then((data) => setTeacher(data as Teacher));
   }, []);
+
+  useEffect(() => {
+    let result = students;
+
+    if (activeFilter !== null) {
+      result = result.filter((student) => student.is_active === activeFilter);
+    }
+
+    if (searchQuery) {
+      result = result.filter((student) =>
+        student.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredStudents(result);
+  }, [activeFilter, searchQuery, students]);
 
   const handleToggle = (value: string) => () => {
     const currentIndex = selectedStudents.indexOf(value);
@@ -123,6 +148,22 @@ export default function TeacherDashboard() {
     }
 
     handleMenuClose();
+  };
+
+  const handleFilterClick = () => {
+    if (activeFilter === null) {
+      setActiveFilter(true);
+    } else if (activeFilter === true) {
+      setActiveFilter(false);
+    } else {
+      setActiveFilter(null);
+    }
+  };
+  const handleSearchClick = () => {
+    setShowSearch(!showSearch);
+    if (!showSearch) {
+      setSearchQuery("");
+    }
   };
 
   return (
@@ -181,7 +222,6 @@ export default function TeacherDashboard() {
         <Typography variant="h6" sx={{ mt: 3, mb: 2, fontWeight: 500 }}>
           Welcome, Mr. {teacher?.name}
         </Typography>
-
         <Box
           sx={{
             display: "flex",
@@ -209,17 +249,57 @@ export default function TeacherDashboard() {
             }}
           >
             <Typography color="white" sx={{ fontSize: "14px" }}>
-              {students.length} users
-            </Typography>{" "}
+              {filteredStudents.length} users
+            </Typography>
           </Box>
-          <IconButton size="small">
+          <IconButton
+            size="small"
+            onClick={handleFilterClick}
+            sx={{
+              bgcolor: activeFilter !== null ? "primary.light" : "transparent",
+            }}
+          >
             <FilterList size={20} />
           </IconButton>
+          {activeFilter !== null && (
+            <Chip
+              label={activeFilter ? "Active" : "Inactive"}
+              onDelete={() => setActiveFilter(null)}
+              size="small"
+              color="primary"
+            />
+          )}
           <Box sx={{ flexGrow: 1 }} />
-          <IconButton size="small">
+          <IconButton
+            size="small"
+            onClick={handleSearchClick}
+            sx={{
+              bgcolor: showSearch ? "primary.light" : "transparent",
+            }}
+          >
             <Search size={20} />
           </IconButton>
         </Box>
+
+        <Collapse in={showSearch} timeout="auto">
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search students..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              size="small"
+              InputProps={{
+                endAdornment: searchQuery ? (
+                  <IconButton size="small" onClick={() => setSearchQuery("")}>
+                    <X size={16} />
+                  </IconButton>
+                ) : null,
+              }}
+            />
+          </Box>
+        </Collapse>
         {loading ? (
           <Box
             sx={{
@@ -233,7 +313,7 @@ export default function TeacherDashboard() {
           </Box>
         ) : (
           <List sx={{ bgcolor: "background.paper" }}>
-            {students.map((student) => (
+            {filteredStudents.map((student) => (
               <ListItem key={student.id} disablePadding>
                 <ListItemButton
                   onClick={handleToggle(student.id.toString())}
