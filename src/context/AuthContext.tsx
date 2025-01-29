@@ -59,6 +59,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.onAuthStateChange((_event, session) => {
       setUserInfo({ session, profile: null });
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

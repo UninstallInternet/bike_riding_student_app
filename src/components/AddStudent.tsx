@@ -8,40 +8,26 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
-import { styled } from "@mui/material/styles";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { AddressAutocomplete } from "./AdressAutoComplete";
 import { addStudent, Student } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
-
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
-
-const years = ["2024", "2025", "2026", "2027"];
-const classes = ["6-A", "6-B", "7-A", "7-B", "8-A", "8-B"];
+import { classes, years } from "../lib/staticConsts";
 
 export default function AddStudent() {
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState<Partial<Student>>({
     name: "",
     email: "",
     password: "",
     address: "",
-    starting_year: 2024,
+    starting_year: 2025,
     class: "",
-    bike_qr_code: "0",
+    bike_qr_code: "",
     distance_to_school: 0,
-    is_active: null,
+    is_active: true,
   });
   const navigate = useNavigate();
 
@@ -53,15 +39,6 @@ export default function AddStudent() {
     }));
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setFormData((prev) => ({
-        ...prev,
-        qrCode: event.target.files![0],
-      }));
-    }
-  };
-
   const handleDistanceChange = (distance: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -70,12 +47,12 @@ export default function AddStudent() {
   };
 
   const handleAddressChange = (address: string | undefined) => {
-    console.log("Updated address in parent:", address);
     setFormData((prev) => ({
       ...prev,
       address: address ?? "",
     }));
   };
+
   const handleSignUp = async (credentials: SignUpWithPasswordCredentials) => {
     if (!("email" in credentials)) return;
     const { email, password } = credentials;
@@ -83,15 +60,55 @@ export default function AddStudent() {
       email,
       password,
     });
-    if (error) console.error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
     console.log(data);
+    return data.user?.id;
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    addStudent(formData as Student);
-    handleSignUp(formData as Student)
-    navigate("/dashboard");
+
+    if (!formData.address) {
+      setError("Adress is required to create student");
+      return;
+    }
+
+    const bikeQrCode = `${formData.name}${
+      Math.floor(Math.random() * 900) + 100
+    }${formData.address?.replace(/[, ].*/, "")}${
+      Math.floor(Math.random() * 900) + 100
+    }`;
+
+    setFormData((prev) => ({
+      ...prev,
+      bike_qr_code: bikeQrCode,
+    }));
+
+    try {
+      const userId = await handleSignUp({
+        email: formData.email!,
+        password: formData.password!,
+      });
+
+      if (!userId) {
+        throw new Error("User creation failed. No user ID returned.");
+      }
+
+      const studentData: Student = {
+        ...formData,
+        id: userId, //
+        bike_qr_code: bikeQrCode,
+      } as Student;
+
+      await addStudent(studentData);
+
+      navigate(`/student/${userId}`);
+    } catch (error) {
+      console.error("Error creating student:", error);
+      alert("Error creating student: " + (error as Error).message);
+    }
   };
 
   return (
@@ -119,6 +136,9 @@ export default function AddStudent() {
       </AppBar>
 
       <Container maxWidth="sm">
+        <Typography sx={{ color: "red", fontWeight: "400" }}>
+          {error}
+        </Typography>
         <Box
           component="form"
           onSubmit={handleSubmit}
@@ -142,7 +162,6 @@ export default function AddStudent() {
               },
             }}
           />
-
           <TextField
             fullWidth
             label="Email"
@@ -157,7 +176,6 @@ export default function AddStudent() {
               },
             }}
           />
-
           <TextField
             fullWidth
             label="Password"
@@ -172,12 +190,10 @@ export default function AddStudent() {
               },
             }}
           />
-
           <AddressAutocomplete
             onAddressChange={handleAddressChange}
             onDistanceChange={handleDistanceChange}
           />
-
           <TextField
             select
             fullWidth
@@ -198,7 +214,6 @@ export default function AddStudent() {
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
             select
             fullWidth
@@ -219,31 +234,12 @@ export default function AddStudent() {
               </MenuItem>
             ))}
           </TextField>
-
-          <Button
-            component="label"
-            variant="outlined"
-            startIcon={<Upload />}
-            sx={{
-              py: 1.5,
-              borderRadius: "12px",
-              borderStyle: "dashed",
-              textTransform: "none",
-            }}
-          >
-            Upload QR Code
-            <VisuallyHiddenInput
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
-          </Button>
-          {formData.bike_qr_code && (
-            <Typography variant="body2" color="text.secondary">
-              Selected file: {formData.bike_qr_code}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: "2" }}>
+            <Typography sx={{ fontSize: "20px", fontWeight: 500 }}>
+              STUDENT QR CODE:
             </Typography>
-          )}
-
+            {formData.bike_qr_code || "Not generated yet"}
+          </Box>
           <Box
             sx={{
               position: "fixed",

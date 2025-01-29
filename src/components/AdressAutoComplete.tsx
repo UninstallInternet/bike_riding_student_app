@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { TextField } from "@mui/material";
+import { useState, useEffect } from "react";
+import { TextField, Box } from "@mui/material";
 import PlacesAutocomplete, {
   geocodeByAddress,
   getLatLng,
@@ -13,20 +13,23 @@ const SCHOOL_LOCATION = {
 export const AddressAutocomplete = ({
   onAddressChange,
   onDistanceChange,
+  initialAddress = "",
 }: {
   onAddressChange: (address: string | undefined) => void;
   onDistanceChange: (distance: number) => void;
+  initialAddress?: string;
 }) => {
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(initialAddress);
 
-  const handleSelect = async (selectedAddress: string) => {
+  // everytime adress changes distance calculation will get triggered again
+  useEffect(() => {
+    if (address && window.google && window.google.maps) {
+      calculateDistance(address);
+    }
+  }, [address]); 
+
+  const calculateDistance = async (selectedAddress: string) => {
     try {
-      // Check if Google Maps library is loaded
-      if (!window.google || !window.google.maps) {
-        console.error("Google Maps JavaScript library not loaded");
-        return;
-      }
-
       const results = await geocodeByAddress(selectedAddress);
       const { lat, lng } = await getLatLng(results[0]);
 
@@ -71,8 +74,19 @@ export const AddressAutocomplete = ({
           }
         }
       );
+    } catch (error) {
+      console.error("Error calculating distance:", error);
+      onDistanceChange(0);
+    }
+  };
 
-      // Update local address state
+  const handleSelect = async (selectedAddress: string) => {
+    try {
+      if (!window.google || !window.google.maps) {
+        console.error("Google Maps JavaScript library not loaded");
+        return;
+      }
+
       setAddress(selectedAddress);
       onAddressChange(selectedAddress);
     } catch (error) {
@@ -85,11 +99,14 @@ export const AddressAutocomplete = ({
   return (
     <PlacesAutocomplete
       value={address}
-      onChange={setAddress}
+      onChange={(newAddress) => {
+        setAddress(newAddress); 
+        onAddressChange(newAddress); 
+      }}
       onSelect={handleSelect}
     >
       {({ getInputProps, suggestions, getSuggestionItemProps }) => (
-        <div>
+        <Box sx={{ position: "relative" }}>
           <TextField
             {...getInputProps({
               fullWidth: true,
@@ -99,20 +116,41 @@ export const AddressAutocomplete = ({
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
                 },
+                "& .MuiInputLabel-root": {
+                  color: "text.secondary",
+                },
               },
             })}
           />
-          <div className="autocomplete-dropdown-container">
+          <Box
+            sx={{
+              position: "absolute",
+              zIndex: 1000,
+              width: "100%",
+              backgroundColor: "white",
+              borderRadius: "4px",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+              maxHeight: "200px",
+              overflowY: "auto",
+            }}
+          >
             {suggestions.map((suggestion) => (
-              <div
+              <Box
                 {...getSuggestionItemProps(suggestion)}
                 key={suggestion.placeId}
+                sx={{
+                  padding: "8px 12px",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "#f5f5f5",
+                  },
+                }}
               >
                 {suggestion.description}
-              </div>
+              </Box>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
     </PlacesAutocomplete>
   );

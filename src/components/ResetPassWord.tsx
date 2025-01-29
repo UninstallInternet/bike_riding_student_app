@@ -12,21 +12,44 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { LockIcon } from "lucide-react";
+import { CircleCheckBig, LockIcon } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "../lib/supabase"; // Adjust according to where you import supabase from
 
 export default function ResetPassword() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSendResetLink = () => {
-    // Simulate sending the reset link
-    // Toggle the dialog visibility
-    setIsDialogOpen(true);
+  const handleResetPassword = async () => {
+    if (newPassword !== newPasswordConfirm) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        console.error("Error updating password:", error.message);
+        setErrorMessage(error.message);
+      } else {
+        console.log("Password updated successfully.");
+        setIsDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      setErrorMessage("An unexpected error occurred.");
+    }
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
   };
+
   return (
     <Box
       sx={{
@@ -72,7 +95,7 @@ export default function ResetPassword() {
             color="text.black"
             sx={{ mb: 2, width: "334px" }}
           >
-            Please choose a new password.{" "}
+            Please choose a new password.
           </Typography>
 
           <Box
@@ -85,8 +108,10 @@ export default function ResetPassword() {
             }}
           >
             <TextField
+              onChange={(e) => setNewPassword(e.target.value)}
               fullWidth
               type="password"
+              value={newPassword}
               placeholder="Enter your new password"
               variant="outlined"
               sx={{
@@ -96,8 +121,10 @@ export default function ResetPassword() {
               }}
             />
             <TextField
+              onChange={(e) => setNewPasswordConfirm(e.target.value)}
               fullWidth
               type="password"
+              value={newPasswordConfirm}
               placeholder="Confirm your new password"
               variant="outlined"
               sx={{
@@ -106,8 +133,13 @@ export default function ResetPassword() {
                 },
               }}
             />
+            {errorMessage && (
+              <Typography color="error" variant="body2" sx={{ textAlign: "center" }}>
+                {errorMessage}
+              </Typography>
+            )}
             <Button
-              onClick={handleSendResetLink}
+              onClick={handleResetPassword}
               variant="contained"
               fullWidth
               sx={{
@@ -120,18 +152,45 @@ export default function ResetPassword() {
                 mt: 1,
               }}
             >
-              {" "}
               <Typography variant="body2" sx={{ color: "white" }}>
                 Save Password
-              </Typography>{" "}
+              </Typography>
             </Button>
           </Box>
         </Box>
       </Container>
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog}>
-        <DialogContent>
-          <DialogContentText>
-           Your password has been succesfully reset!
+
+      <Dialog
+        slotProps={{
+          paper: { sx: { borderRadius: "28px" } },
+        }}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+      >
+        <DialogContent
+          sx={{
+            width: 324,
+            height: 210,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          <CircleCheckBig size={48} color="#718EBF" />
+          <DialogContentText
+            sx={{
+              fontWeight: 400,
+              fontSize: 24,
+              color: "black",
+              textAlign: "center",
+            }}
+          >
+            Your password has been successfully reset!
+          </DialogContentText>
+          <DialogContentText sx={{ fontWeight: 400, color: "text.secondary" }}>
+            You can now log in using your new password.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

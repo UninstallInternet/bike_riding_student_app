@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Box,
   Button,
@@ -14,17 +12,42 @@ import {
 } from "@mui/material";
 import { LogInIcon } from "lucide-react";
 import { useState } from "react";
+import { CircleCheckBig } from "lucide-react";
+import { supabase } from "../lib/supabase";
+
+const isValidEmail = (email: string) => {
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+};
 
 export default function SendResetLink() {
+  const [email, setEmail] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [emailError, setEmailError] = useState(false); 
 
-  const handleSendResetLink = () => {
-    setIsDialogOpen(true);
+  const handleSendResetLink = async () => {
+    if (!isValidEmail(email)) {
+      setEmailError(true);
+      return;
+    }
+
+    setEmailError(false);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "http://localhost:5173/login/passwordreset",
+    });
+
+    if (error) {
+      console.error("Error sending password reset email:", error.message);
+    } else {
+      console.log("Password reset email sent");
+      setIsDialogOpen(true);
+    }
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
   };
+
   return (
     <Box
       sx={{
@@ -71,7 +94,7 @@ export default function SendResetLink() {
             sx={{ mb: 2, width: "334px" }}
           >
             Please enter the email address linked to your account. We will send
-            you a link to reset your password.{" "}
+            you a link to reset your password.
           </Typography>
 
           <Box
@@ -87,6 +110,12 @@ export default function SendResetLink() {
               fullWidth
               placeholder="Email"
               variant="outlined"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={emailError}
+              helperText={
+                emailError ? "Please enter a valid email address" : ""
+              }
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
@@ -107,19 +136,42 @@ export default function SendResetLink() {
                 mt: 1,
               }}
             >
-              {" "}
               <Typography variant="body2" sx={{ color: "white" }}>
                 Send Reset Link
-              </Typography>{" "}
+              </Typography>
             </Button>
           </Box>
         </Box>
       </Container>
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog}>
-        <DialogContent>
-          <DialogContentText>
-            A request link has been sent to your email. Please check your inbox
-            to reset your password.
+
+      <Dialog
+        slotProps={{
+          paper: { sx: { borderRadius: "28px" } },
+        }}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+      >
+        <DialogContent
+          sx={{
+            width: 324,
+            height: 210,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          <CircleCheckBig size={48} color="#718EBF" />
+          <DialogContentText
+            sx={{
+              fontSize: 18,
+              fontWeight: 500,
+              color: "black",
+              textAlign: "center",
+            }}
+          >
+            A request link has been sent to your email.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

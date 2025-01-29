@@ -77,7 +77,7 @@ export default function RoleSelector() {
               variant="contained"
               color="primary"
               fullWidth
-              onClick={() => handleRoleSelection("teacher")} // Navigate to teacher login page
+              onClick={() => handleRoleSelection("teacher")} 
             >
               I'm a Teacher
             </Button>
@@ -86,7 +86,7 @@ export default function RoleSelector() {
               variant="contained"
               color="secondary"
               fullWidth
-              onClick={() => handleRoleSelection("student")} // Navigate to student login page
+              onClick={() => handleRoleSelection("student")}
             >
               I'm a Student
             </Button>

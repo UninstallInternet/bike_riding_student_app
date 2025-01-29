@@ -21,29 +21,40 @@ import Stack from "@mui/material/Stack";
 import {
   Filter as FilterList,
   Search,
-  FlipVerticalIcon as MoreVert,
   ChevronUp,
   UserPlus,
+  Trash2,
+  UserMinus,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchUsers, Student } from "../lib/api";
+import {
+  deactivateStudents,
+  deleteStudents,
+  exportStudentsCsv,
+  fetchUserData,
+  fetchUsers,
+  Student,
+  Teacher,
+} from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { UserAuth } from "../context/AuthContext";
-
-// const students = Array(8)
-//   .fill(null)
-//   .map((_, index) => ({
-//     id: `student-${index + 1}`,
-//     name: "Olivia Rhye",
-//     studentId: "1234-5678-9012",
-//     class: "6-A",
-//     isActive: true,
-//   }));
+import {
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  CircularProgress,
+} from "@mui/material";
 
 export default function TeacherDashboard() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [students, setStudents] = useState<Student[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
   const navigate = useNavigate();
 
   const { session } = UserAuth();
@@ -58,7 +69,16 @@ export default function TeacherDashboard() {
   };
 
   useEffect(() => {
-    fetchUsers().then((data) => setStudents(data));
+    fetchUsers()
+      .then((data) => {
+        setStudents(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching students:", error);
+        setLoading(false);
+      });
+    fetchUserData().then((data) => setTeacher(data as Teacher));
   }, []);
 
   const handleToggle = (value: string) => () => {
@@ -82,44 +102,16 @@ export default function TeacherDashboard() {
     setAnchorEl(null);
   };
 
-  const deleteStudents = async (studentIds: string[]) => {
-    const { error } = await supabase
-      .from("students")
-      .delete()
-      .in("id", studentIds);
-
-    if (error) {
-      console.error("Error deleting students:", error);
-      return false;
-    }
-    return true;
-  };
-
-  const deactivateStudents = async (studentIds: string[]) => {
-    const { error } = await supabase
-      .from("students")
-      .update({ is_active: false })
-      .in("id", studentIds);
-
-    if (error) {
-      console.error("Error deactivating students:", error);
-      return false;
-    }
-    return true;
-  };
-
-  const exportStudentsCsv = async (studentIds?: string[]) => {
-    console.log(studentIds);
-  };
-
   const handleAction = async (action: string) => {
     let result;
     switch (action) {
       case "delete":
         result = await deleteStudents(selectedStudents);
+        setIsDeleteDialogOpen(false);
         break;
       case "deactivate":
         result = await deactivateStudents(selectedStudents);
+        setIsDeactivateDialogOpen(false);
         break;
       case "export":
         result = await exportStudentsCsv(selectedStudents);
@@ -146,7 +138,6 @@ export default function TeacherDashboard() {
         }}
       >
         <Toolbar>
-          {/* Left side with Avatar and Typography */}
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar sx={{ width: 32, height: 32 }} />
             <Typography variant="subtitle1" component="h1" fontWeight={500}>
@@ -171,7 +162,7 @@ export default function TeacherDashboard() {
                 color: "white",
                 borderRadius: "20px",
                 marginLeft: 3,
-                paddingX: 3,
+                paddingX: 1,
                 paddingY: 1,
                 "&:hover": {
                   bgcolor: "error.dark",
@@ -188,7 +179,7 @@ export default function TeacherDashboard() {
 
       <Container>
         <Typography variant="h6" sx={{ mt: 3, mb: 2, fontWeight: 500 }}>
-          Welcome, Mr. Johnson!
+          Welcome, Mr. {teacher?.name}
         </Typography>
 
         <Box
@@ -208,15 +199,18 @@ export default function TeacherDashboard() {
           </Typography>
           <Box
             sx={{
-              bgcolor: (theme) => theme.palette.primary.main + "1A",
+              width: 55,
+              bgcolor: "#718EBF",
               color: "primary.main",
-              px: 1,
+              px: 0.5,
               py: 0.5,
-              borderRadius: 1,
+              borderRadius: 16,
               fontSize: "0.875rem",
             }}
           >
-            50 users
+            <Typography color="white" sx={{ fontSize: "14px" }}>
+              {students.length} users
+            </Typography>{" "}
           </Box>
           <IconButton size="small">
             <FilterList size={20} />
@@ -226,68 +220,89 @@ export default function TeacherDashboard() {
             <Search size={20} />
           </IconButton>
         </Box>
-
-        <List sx={{ bgcolor: "background.paper" }}>
-          {students.map((student) => (
-            <ListItem
-              key={student.id}
-              disablePadding
-              secondaryAction={
-                <IconButton edge="end">
-                  <MoreVert size={20} />
-                </IconButton>
-              }
-            >
-              <ListItemButton
-                onClick={handleToggle(student.id.toString())}
-                dense
-              >
-                <ListItemIcon>
-                  <Checkbox
-                    edge="start"
-                    checked={
-                      selectedStudents.indexOf(student.id.toString()) !== -1
-                    }
-                    tabIndex={-1}
-                    disableRipple
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  primary={student.name}
-                  secondary={student.id}
-                  primaryTypographyProps={{
-                    fontWeight: 500,
-                  }}
-                  secondaryTypographyProps={{
-                    sx: { color: "text.secondary" },
-                  }}
-                />
-                <Box
+        {loading ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "300px",
+            }}
+          >
+            <CircularProgress sx={{ color: "#35D187" }} />
+          </Box>
+        ) : (
+          <List sx={{ bgcolor: "background.paper" }}>
+            {students.map((student) => (
+              <ListItem key={student.id} disablePadding>
+                <ListItemButton
+                  onClick={handleToggle(student.id.toString())}
+                  dense
                   sx={{
                     display: "flex",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    gap: 1,
-                    mr: 2,
                   }}
                 >
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    {student.class}
-                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <ListItemIcon>
+                      <Checkbox
+                        edge="start"
+                        checked={
+                          selectedStudents.indexOf(student.id.toString()) !== -1
+                        }
+                        tabIndex={-1}
+                        disableRipple
+                      />
+                    </ListItemIcon>
+                    <Link
+                      to={`/student/${student.id}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <ListItemText
+                        primary={student.name}
+                        slotProps={{
+                          primary: {
+                            sx: { fontWeight: 500 },
+                          },
+                          secondary: {
+                            sx: { color: "text.secondary" },
+                          },
+                        }}
+                      />
+                    </Link>
+                  </Box>
+
                   <Box
                     sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      bgcolor: student.is_active
-                        ? "success.main"
-                        : "text.disabled",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mr: 2,
                     }}
-                  />
-                </Box>
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      {student.class}
+                    </Typography>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        bgcolor: student.is_active
+                          ? "success.main"
+                          : "text.disabled",
+                      }}
+                    />
+                  </Box>
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        )}
 
         <Box
           sx={{
@@ -330,10 +345,10 @@ export default function TeacherDashboard() {
               horizontal: "center",
             }}
           >
-            <MenuItem onClick={() => handleAction("deactivate")}>
+            <MenuItem onClick={() => setIsDeactivateDialogOpen(true)}>
               Deactivate selected students
             </MenuItem>
-            <MenuItem onClick={() => handleAction("delete")}>
+            <MenuItem onClick={() => setIsDeleteDialogOpen(true)}>
               Delete selected students
             </MenuItem>
             <MenuItem onClick={() => handleAction("export")}>
@@ -342,6 +357,88 @@ export default function TeacherDashboard() {
           </Menu>
         </Box>
       </Container>
+      <Dialog
+        slotProps={{
+          paper: { sx: { borderRadius: "28px" } },
+        }}
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        sx={{ borderRadius: "28px" }}
+      >
+        <DialogContent
+          sx={{
+            width: 300,
+            height: 185,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          <Trash2 size={48} color="#718EBF" />
+          <DialogContentText
+            sx={{
+              fontSize: 18,
+              fontWeight: 400,
+              color: "black",
+              textAlign: "center",
+            }}
+          >
+            Are you sure you want to delete these students student? This action
+            cannot be undone.{" "}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDeleteDialogOpen(false)} autoFocus>
+            <Typography sx={{ color: "#737373" }}>Cancel</Typography>{" "}
+          </Button>
+          <Button onClick={() => handleAction("delete")} autoFocus>
+            <Typography sx={{ color: "black" }}>Yes</Typography>
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        slotProps={{
+          paper: { sx: { borderRadius: "28px" } },
+        }}
+        open={isDeactivateDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        sx={{ borderRadius: "28px" }}
+      >
+        <DialogContent
+          sx={{
+            width: 300,
+            height: 185,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          <UserMinus size={48} color="#718EBF" />
+          <DialogContentText
+            sx={{
+              fontSize: 18,
+              fontWeight: 400,
+              color: "black",
+              textAlign: "center",
+            }}
+          >
+            Are you sure you want to deactivate these students student? This
+            action cannot be undone.{" "}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDeactivateDialogOpen(false)} autoFocus>
+            <Typography sx={{ color: "#737373" }}>Cancel</Typography>{" "}
+          </Button>
+          <Button onClick={() => handleAction("deactivate")} autoFocus>
+            <Typography sx={{ color: "black" }}>Yes</Typography>
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
