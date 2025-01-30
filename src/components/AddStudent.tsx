@@ -17,6 +17,8 @@ import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 import { classes, years } from "../lib/staticConsts";
 
 export default function AddStudent() {
+  const [isDistanceValid, setIsDistanceValid] = useState(false);
+
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<Partial<Student>>({
     name: "",
@@ -39,13 +41,14 @@ export default function AddStudent() {
     }));
   };
 
-  const handleDistanceChange = (distance: number) => {
+  const handleDistanceChange = (distance: number, isValid: boolean) => {
     setFormData((prev) => ({
       ...prev,
       distance_to_school: distance,
     }));
+    setIsDistanceValid(isValid);
   };
-
+  
   const handleAddressChange = (address: string | undefined) => {
     setFormData((prev) => ({
       ...prev,
@@ -75,7 +78,14 @@ export default function AddStudent() {
       return;
     }
 
-    const bikeQrCode = `${formData.name}${
+    if (!isDistanceValid) {
+      setError("Invalid address or distance cannot be calculated.");
+      return;
+    }
+
+    const nameWithoutSpaces = formData.name?.replace(/\s+/g, "") || "";
+
+    const bikeQrCode = `${nameWithoutSpaces}${
       Math.floor(Math.random() * 900) + 100
     }${formData.address?.replace(/[, ].*/, "")}${
       Math.floor(Math.random() * 900) + 100
@@ -194,6 +204,7 @@ export default function AddStudent() {
             onAddressChange={handleAddressChange}
             onDistanceChange={handleDistanceChange}
           />
+   
           <TextField
             select
             fullWidth

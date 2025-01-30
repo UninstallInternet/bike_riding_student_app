@@ -16,24 +16,22 @@ export const AddressAutocomplete = ({
   initialAddress = "",
 }: {
   onAddressChange: (address: string | undefined) => void;
-  onDistanceChange: (distance: number) => void;
+  onDistanceChange: (distance: number, isValid: boolean) => void;
   initialAddress?: string;
 }) => {
   const [address, setAddress] = useState(initialAddress);
 
-  // everytime adress changes distance calculation will get triggered again
   useEffect(() => {
     if (address && window.google && window.google.maps) {
       calculateDistance(address);
     }
-  }, [address]); 
+  }, [address]);
 
   const calculateDistance = async (selectedAddress: string) => {
     try {
       const results = await geocodeByAddress(selectedAddress);
       const { lat, lng } = await getLatLng(results[0]);
 
-      // Distance Matrix API to get biking distance
       const service = new window.google.maps.DistanceMatrixService();
       service.getDistanceMatrix(
         {
@@ -60,23 +58,23 @@ export const AddressAutocomplete = ({
                 `Biking distance from school to ${selectedAddress}: ${distanceInKm} km`
               );
 
-              onDistanceChange(distanceInKm);
+              onDistanceChange(distanceInKm, true);
             } else {
               console.error(
                 "No route found or invalid destination:",
                 element?.status
               );
-              onDistanceChange(0);
+              onDistanceChange(0, false);
             }
           } else {
             console.error("Error fetching biking distance:", status);
-            onDistanceChange(0);
+            onDistanceChange(0, false); 
           }
         }
       );
     } catch (error) {
       console.error("Error calculating distance:", error);
-      onDistanceChange(0);
+      onDistanceChange(0, false);
     }
   };
 
@@ -92,7 +90,7 @@ export const AddressAutocomplete = ({
     } catch (error) {
       console.error("Error selecting address:", error);
       onAddressChange(undefined);
-      onDistanceChange(0);
+      onDistanceChange(0, false);
     }
   };
 
@@ -100,10 +98,13 @@ export const AddressAutocomplete = ({
     <PlacesAutocomplete
       value={address}
       onChange={(newAddress) => {
-        setAddress(newAddress); 
-        onAddressChange(newAddress); 
+        setAddress(newAddress);
+        onAddressChange(newAddress);
       }}
       onSelect={handleSelect}
+      // searchOptions={{
+      // //   componentRestrictions: { country: "es" }, 
+      // }}  
     >
       {({ getInputProps, suggestions, getSuggestionItemProps }) => (
         <Box sx={{ position: "relative" }}>

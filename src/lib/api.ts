@@ -40,7 +40,7 @@ export const addStudent = async (student: Student) => {
   return data;
   
 };
-export const fetchUserData = async () => {
+export const fetchTeacher = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (user) {

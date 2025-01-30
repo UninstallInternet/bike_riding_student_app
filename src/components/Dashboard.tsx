@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -32,7 +32,7 @@ import {
   deactivateStudents,
   deleteStudents,
   exportStudentsCsv,
-  fetchUserData,
+  fetchTeacher,
   fetchUsers,
   Student,
   Teacher,
@@ -49,19 +49,26 @@ import {
   Collapse,
   TextField,
 } from "@mui/material";
+import FilterPanel from "./FilterPanel";
 
 export default function TeacherDashboard() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [students, setStudents] = useState<Student[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [showSearch, setShowSearch] = useState(false);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<boolean | null>(null);
+  const [showFilter, setShowFilter] = useState(false);
+  const studentsRef = useRef<Student[]>([]); // Ref to store all students data
+
+  const [filters, setFilters] = useState({
+    sortByYear: false,
+    sortByRides: false,
+    sortByClass: false,
+  });
 
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const navigate = useNavigate();
@@ -80,18 +87,19 @@ export default function TeacherDashboard() {
   useEffect(() => {
     fetchUsers()
       .then((data) => {
-        setStudents(data);
+        studentsRef.current = data;
+        setFilteredStudents(data);
         setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching students:", error);
         setLoading(false);
       });
-    fetchUserData().then((data) => setTeacher(data as Teacher));
+    fetchTeacher().then((data) => setTeacher(data as Teacher));
   }, []);
 
   useEffect(() => {
-    let result = students;
+    let result = [...studentsRef.current];
 
     if (activeFilter !== null) {
       result = result.filter((student) => student.is_active === activeFilter);
@@ -103,8 +111,22 @@ export default function TeacherDashboard() {
       );
     }
 
+    if (filters.sortByClass) {
+      result = result.sort((a, b) => a.class.localeCompare(b.class));
+    }
+
+    if (filters.sortByYear) {
+      result = result.sort((a, b) => a.starting_year - b.starting_year);
+    }
+
+    if (filters.sortByRides) {
+      result = result.sort(
+        (a, b) => a.distance_to_school - b.distance_to_school
+      );
+    }
+
     setFilteredStudents(result);
-  }, [activeFilter, searchQuery, students]);
+  }, [activeFilter, searchQuery, filters]);
 
   const handleToggle = (value: string) => () => {
     const currentIndex = selectedStudents.indexOf(value);
@@ -144,26 +166,30 @@ export default function TeacherDashboard() {
     }
 
     if (result) {
-      fetchUsers().then((data) => setStudents(data));
+      fetchUsers().then((data) => setFilteredStudents(data));
     }
 
     handleMenuClose();
   };
 
-  const handleFilterClick = () => {
-    if (activeFilter === null) {
-      setActiveFilter(true);
-    } else if (activeFilter === true) {
-      setActiveFilter(false);
-    } else {
-      setActiveFilter(null);
-    }
-  };
   const handleSearchClick = () => {
     setShowSearch(!showSearch);
     if (!showSearch) {
       setSearchQuery("");
     }
+  };
+
+  const handleFilterClick = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = event.target;
+
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: checked,
+    }));
   };
 
   return (
@@ -261,6 +287,13 @@ export default function TeacherDashboard() {
           >
             <FilterList size={20} />
           </IconButton>
+          <FilterPanel
+            showFilter={showFilter}
+            onClose={handleFilterClick}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+          />
+
           {activeFilter !== null && (
             <Chip
               label={activeFilter ? "Active" : "Inactive"}
