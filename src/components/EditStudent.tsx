@@ -13,14 +13,17 @@ import {
   Box,
 } from "@mui/material";
 import { AddressAutocomplete } from "./AdressAutoComplete";
-import { Student } from "../lib/api";
+import { deactivateStudents, Student } from "../lib/api";
 import { classes, years } from "../lib/staticConsts";
 import { ArrowLeft } from "lucide-react";
+import DeactivateButton from "./DeactivateButton";
+import DeactivateDialog from "./DeactivateDialog";
 
 export default function EditStudent() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student>();
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     class: "",
@@ -63,7 +66,7 @@ export default function EditStudent() {
 
     setFormData((prevData) => ({
       ...prevData,
-      [name]: name === "is_active" ? value === "Active" : value, // ✅ Correct handling
+      [name]: name === "is_active" ? value === "Active" : value,
     }));
   };
 
@@ -118,7 +121,7 @@ export default function EditStudent() {
         <Box
           sx={{
             px: 2,
-            py: 1.5,
+            py: 0.5,
             display: "flex",
             alignItems: "center",
             borderBottom: "1px solid",
@@ -130,18 +133,17 @@ export default function EditStudent() {
               edge="start"
               sx={{
                 mr: 4,
-                mt: 2,
+                mt: 1,
               }}
             >
               <ArrowLeft />
             </IconButton>
           </Link>
-          <Typography variant="h4" gutterBottom sx={{ mt: 3, fontWeight: 500 }}>
+          <Typography variant="h4" gutterBottom sx={{ mt: 2, fontWeight: 500 }}>
             Edit Student
           </Typography>
         </Box>
-
-        <Paper elevation={3} sx={{ p: 3, mt: 2 }}>
+        <Paper elevation={3} sx={{ p: 3, mt: 1 }}>
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
@@ -243,6 +245,28 @@ export default function EditStudent() {
             </Button>
           </form>
         </Paper>
+        <Box
+          sx={{
+            position: "sticky",
+            bottom: 16,
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "end",
+            justifyContent: "center",
+            gap: 2,
+          }}
+        >
+          <DeactivateButton
+            setIsDeactivateDialogOpen={setIsDeactivateDialogOpen}
+          />
+        </Box>
+        <DeactivateDialog
+          isDeactivateDialogOpen={isDeactivateDialogOpen}
+          setIsDeactivateDialogOpen={setIsDeactivateDialogOpen}
+          deactivateStudents={deactivateStudents}
+          studentId={student?.id}
+        />
       </Box>
     </Container>
   );

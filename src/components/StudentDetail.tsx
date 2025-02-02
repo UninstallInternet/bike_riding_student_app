@@ -5,7 +5,7 @@ import IconButton from "@mui/material/IconButton";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
-import { ArrowLeft, Trash2, Bike, PencilLine, UserMinus } from "lucide-react";
+import { ArrowLeft, Trash2, Bike, PencilLine } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
@@ -23,6 +23,8 @@ import {
   DialogContentText,
 } from "@mui/material";
 import RideHistory from "./SingleRides";
+import DeactivateButton from "./DeactivateButton";
+import DeactivateDialog from "./DeactivateDialog";
 
 export default function StudentDetails() {
   const { id } = useParams();
@@ -104,7 +106,6 @@ export default function StudentDetails() {
           <Trash2 size={24} />
         </IconButton>
       </Box>
-
       <Container maxWidth="md">
         <Box
           sx={{
@@ -319,7 +320,7 @@ export default function StudentDetails() {
             </Box>
           </Box>
         </Box>
-        <Box sx={{ p: 3, bgcolor: "#F5F7FA", borderRadius:2 }}>
+        <Box sx={{ p: 3, bgcolor: "#F5F7FA", borderRadius: 2 }}>
           <RideHistory singleRides={singleRides} />{" "}
         </Box>
         <Box
@@ -334,29 +335,9 @@ export default function StudentDetails() {
             gap: 2,
           }}
         >
-          <Button
-            type="submit"
-            variant="contained"
-            onClick={() => setIsDeactivateDialogOpen(true)}
-            sx={{
-              bgcolor: "#35D187",
-              color: "white",
-              position: "sticky",
-              py: 2,
-              mt: 2,
-              px: 1,
-              borderRadius: 3,
-              right: -320,
-              textTransform: "none",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-              "&:hover": {
-                bgcolor: "#2bb974",
-              },
-            }}
-          >
-            <UserMinus size={18} />
-            <Typography sx={{ marginLeft: 1 }}>Deactivate Student</Typography>
-          </Button>
+          <DeactivateButton
+            setIsDeactivateDialogOpen={setIsDeactivateDialogOpen}
+          />
         </Box>
       </Container>
       <Dialog
@@ -403,57 +384,12 @@ export default function StudentDetails() {
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog
-        slotProps={{
-          paper: { sx: { borderRadius: "28px" } },
-        }}
-        open={isDeactivateDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        sx={{ borderRadius: "28px" }}
-      >
-        <DialogContent
-          sx={{
-            width: 300,
-            height: 185,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-          }}
-        >
-          <UserMinus size={48} color="#718EBF" />
-          <DialogContentText
-            sx={{
-              fontSize: 18,
-              fontWeight: 400,
-              color: "black",
-              textAlign: "center",
-            }}
-          >
-            Are you sure you want to deactivate this student? This action cannot
-            be undone.{" "}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsDeactivateDialogOpen(false)} autoFocus>
-            <Typography sx={{ color: "#737373" }}>Cancel</Typography>{" "}
-          </Button>
-          <Button
-            onClick={() => {
-              if (student?.id) {
-                deactivateStudents([student.id]).then(() => {
-                  setIsDeactivateDialogOpen(false);
-                  navigate("/dashboard");
-                });
-              }
-            }}
-            autoFocus
-          >
-            <Typography sx={{ color: "black" }}>Yes</Typography>
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeactivateDialog
+        isDeactivateDialogOpen={isDeactivateDialogOpen}
+        setIsDeactivateDialogOpen={setIsDeactivateDialogOpen}
+        deactivateStudents={deactivateStudents}
+        studentId={student?.id}
+      />{" "}
     </Box>
   );
 }
