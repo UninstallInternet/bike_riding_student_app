@@ -100,7 +100,7 @@ export const exportStudentsCsv = async (
   }
   try {
     let query = supabase.from("students").select(
-      `id,
+      `
         name,
         class,
         address,
