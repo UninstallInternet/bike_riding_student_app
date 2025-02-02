@@ -5,13 +5,7 @@ import IconButton from "@mui/material/IconButton";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
-import {
-  ArrowLeft,
-  Trash2,
-  Bike,
-  PencilLine,
-  UserMinus,
-} from "lucide-react";
+import { ArrowLeft, Trash2, Bike, PencilLine, UserMinus } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
@@ -115,6 +109,7 @@ export default function StudentDetails() {
         <Box
           sx={{
             display: "flex",
+
             flexDirection: "column",
             pt: 2,
             pb: 2,
@@ -218,7 +213,15 @@ export default function StudentDetails() {
             </Button>
           </Link>
         </Box>
-        <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4, px: 2, borderRadius: 4 }}>
+        <Box
+          sx={{
+            bgcolor: "#F8F9FB",
+            pt: 3,
+            pb: 4,
+            px: 2,
+            borderRadius: 4,
+          }}
+        >
           <Paper
             elevation={0}
             sx={{
@@ -316,7 +319,9 @@ export default function StudentDetails() {
             </Box>
           </Box>
         </Box>
-        <RideHistory singleRides={singleRides} />{" "}
+        <Box sx={{ p: 3, bgcolor: "#F5F7FA", borderRadius:2 }}>
+          <RideHistory singleRides={singleRides} />{" "}
+        </Box>
         <Box
           sx={{
             position: "sticky",
