@@ -18,7 +18,6 @@ import { classes, years } from "../lib/staticConsts";
 
 export default function AddStudent() {
   const [isDistanceValid, setIsDistanceValid] = useState(false);
-
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<Partial<Student>>({
     name: "",
@@ -48,7 +47,7 @@ export default function AddStudent() {
     }));
     setIsDistanceValid(isValid);
   };
-  
+
   const handleAddressChange = (address: string | undefined) => {
     setFormData((prev) => ({
       ...prev,
@@ -70,11 +69,21 @@ export default function AddStudent() {
     return data.user?.id;
   };
 
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (!validateEmail(formData.email!)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     if (!formData.address) {
-      setError("Adress is required to create student");
+      setError("Address is required to create student");
       return;
     }
 
@@ -108,7 +117,7 @@ export default function AddStudent() {
 
       const studentData: Student = {
         ...formData,
-        id: userId, //
+        id: userId,
         bike_qr_code: bikeQrCode,
       } as Student;
 
@@ -117,7 +126,7 @@ export default function AddStudent() {
       navigate(`/student/${userId}`);
     } catch (error) {
       console.error("Error creating student:", error);
-      alert("Error creating student: " + (error as Error).message);
+    setError("Error creating student: " + (error as Error).message);
     }
   };
 
@@ -204,7 +213,7 @@ export default function AddStudent() {
             onAddressChange={handleAddressChange}
             onDistanceChange={handleDistanceChange}
           />
-   
+
           <TextField
             select
             fullWidth

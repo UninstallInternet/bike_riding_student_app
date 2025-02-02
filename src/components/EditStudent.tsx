@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -57,15 +55,16 @@ export default function EditStudent() {
     }
     console.log(formData);
     fetchStudent();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value === "Active" ? true : false,
-    });
+
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: name === "is_active" ? value === "Active" : value, // ✅ Correct handling
+    }));
   };
 
   const handleAddressChange = (address: string | undefined) => {
@@ -126,21 +125,20 @@ export default function EditStudent() {
             borderColor: "divider",
           }}
         >
-
           <Link to={`/student/${id}`}>
             <IconButton
               edge="start"
               sx={{
                 mr: 4,
-                mt:2,
+                mt: 2,
               }}
             >
               <ArrowLeft />
             </IconButton>
           </Link>
-              <Typography variant="h4" gutterBottom sx={{ mt: 3, fontWeight: 500 }}>
-                Edit Student
-              </Typography>
+          <Typography variant="h4" gutterBottom sx={{ mt: 3, fontWeight: 500 }}>
+            Edit Student
+          </Typography>
         </Box>
 
         <Paper elevation={3} sx={{ p: 3, mt: 2 }}>
@@ -153,6 +151,7 @@ export default function EditStudent() {
               onChange={handleInputChange}
               margin="normal"
               required
+              sx={{ mb: 2 }}
             />
 
             <TextField
@@ -166,6 +165,7 @@ export default function EditStudent() {
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
+                  mb: 1,
                 },
               }}
             >
@@ -208,7 +208,7 @@ export default function EditStudent() {
                   borderRadius: "12px",
                 },
                 mt: 2,
-                mb:2,
+                mb: 2,
               }}
             >
               {years.map((year) => (
@@ -218,7 +218,6 @@ export default function EditStudent() {
               ))}
             </TextField>
 
-            {/* trigger distance calculation and address change for edited user */}
             <AddressAutocomplete
               onAddressChange={handleAddressChange}
               onDistanceChange={handleDistanceChange}
@@ -233,7 +232,12 @@ export default function EditStudent() {
               type="submit"
               variant="contained"
               fullWidth
-              sx={{ mt: 3, py: 1.5, borderRadius: "12px", textTransform: "none" }}
+              sx={{
+                mt: 3,
+                py: 1.5,
+                borderRadius: "12px",
+                textTransform: "none",
+              }}
             >
               Save Changes
             </Button>

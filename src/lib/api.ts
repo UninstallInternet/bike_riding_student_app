@@ -14,40 +14,46 @@ import { supabase } from "./supabase";
 // };
 
 export const fetchUsers = async () => {
-  const { data, error } = await supabase
-    .from("students")
-    .select("*")
+  const { data, error } = await supabase.from("students").select(
+    `*,
+      rides (id)` // Join the rides table and fetch the ride IDs
+  );
+
   if (error) {
     console.error(error);
     return [];
   } else {
-    return data;
+    // Calculate ride_count for each student
+    const studentsWithRides = data.map((student) => ({
+      ...student,
+      ride_count: student.rides.length, // Count the number of rides
+    }));
+    return studentsWithRides;
   }
 };
-
 export const addStudent = async (student: Student) => {
-
   const { data, error } = await supabase
-    .from('students')
+    .from("students")
     .insert([student])
     .select();
 
   if (error) {
-    console.error('Student Insert Error:', error);
+    console.error("Student Insert Error:", error);
     return null;
   }
 
   return data;
-  
 };
 export const fetchTeacher = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (user) {
     const { data, error } = await supabase
       .from("teachers")
       .select("name")
-      .eq("id", user.id) 
+      .eq("id", user.id)
       .single();
 
     if (error) {
@@ -71,7 +77,6 @@ export const deleteStudents = async (studentIds: string[]) => {
   return true;
 };
 
-
 export const deactivateStudents = async (studentIds: string[]) => {
   const { error } = await supabase
     .from("students")
@@ -85,58 +90,131 @@ export const deactivateStudents = async (studentIds: string[]) => {
   return true;
 };
 
-
-
-export const exportStudentsCsv = async (studentIds?: string[]) => {
-  if (!studentIds || studentIds.length === 0) {
-    console.error("No students selected for export.");
+export const exportStudentsCsv = async (
+  studentIds: string[],
+  fields: string[],
+  classFilter?: string
+) => {
+  if ((!studentIds || studentIds.length === 0) && !classFilter) {
     return;
   }
-
   try {
-    const { data, error } = await supabase
-      .from("students")
-      .select("id, name, class, is_active")
-      .in("id", studentIds);
+    let query = supabase.from("students").select(
+      `id,
+        name,
+        class,
+        address,
+        distance_to_school,
+        bike_qr_code,
+        rides(count)`
+    );
+
+    if (classFilter) {
+      query = query.eq("class", classFilter);
+    } else {
+      query = query.in("id", studentIds);
+    }
+    const { data, error } = await query.csv();
 
     if (error) {
       console.error("Error fetching students for CSV export:", error);
       return;
     }
 
-    if (data && data.length > 0) {
-      const csvRows = [
-        ["ID", "Name", "Class", "Is Active"],
-        ...data.map(student => [
-          student.id,
-          student.name,
-          student.class,
-          student.is_active ? "Active" : "Inactive",
-        ]),
-      ];
-
-      const csvContent = csvRows.map(row => row.join(",")).join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "students.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      console.log("CSV export successful.");
-    } else {
-      console.log("No student data found for the selected IDs.");
+    if (!data) {
+      console.error("No CSV data received.");
+      return;
     }
+
+    const lines = data.split("\n");
+    const headers = lines[0].split(",");
+
+    const nameIndex = headers.indexOf("name");
+    const classIndex = headers.indexOf("class");
+
+    if (!fields.includes("name") && nameIndex !== -1) {
+      headers.splice(nameIndex, 1);
+    }
+    if (!fields.includes("class") && classIndex !== -1) {
+      const adjustedClassIndex = fields.includes("name")
+        ? classIndex
+        : classIndex - 1;
+      headers.splice(adjustedClassIndex, 1);
+    }
+
+    headers.push("total Km");
+
+    const processedLines = lines.map((line, index) => {
+      const columns = line.split(",");
+
+      if (!fields.includes("name") && nameIndex !== -1) {
+        columns.splice(nameIndex, 1);
+      }
+
+      if (!fields.includes("class") && classIndex !== -1) {
+        const adjustedClassIndex = fields.includes("name")
+          ? classIndex
+          : classIndex - 1;
+        columns.splice(adjustedClassIndex, 1);
+      }
+
+      if (index !== 0) {
+        const countColumn = columns[columns.length - 1];
+        const distanceColumn = columns[columns.length - 3];
+
+        const countValue = parseInt(countColumn.match(/\d+/)?.[0] || "0", 10);
+        const distanceValue = parseFloat(distanceColumn) || 0;
+
+        const totalBikedAmount = distanceValue * countValue;
+        columns.push(totalBikedAmount.toString());
+
+        columns[columns.length - 2] = countValue.toString();
+      }
+
+      return columns.join(",");
+    });
+
+    processedLines[0] = headers.join(",");
+
+    const processedData = processedLines.join("\n");
+
+    const blob = new Blob([processedData], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "students.csv";
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   } catch (error) {
     console.error("Error exporting students to CSV:", error);
   }
 };
 
+export const studentWithRidesQuery = async (id: string) => {
+  const { data, error } = await supabase
+    .from("students")
+    .select(
+      `id, name, class, address, distance_to_school, bike_qr_code, starting_year,is_active, rides(id)`
+    )
+    .eq("id", id)
+    .single();
 
-//types, coming from supabase.
+  if (error) {
+    console.error("Error fetching student details:", error);
+    return null; 
+  }
+
+  return data;
+};
+
+//types coming from supabase
+export type StudentWithRides = Awaited<
+  ReturnType<typeof studentWithRidesQuery>
+>;
 
 export type Student = Database["public"]["Tables"]["students"]["Row"];
 export type Teacher = Database["public"]["Tables"]["teachers"]["Row"];

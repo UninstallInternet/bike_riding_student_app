@@ -6,60 +6,56 @@ import {
   ReactNode,
 } from "react";
 import { supabase } from "../lib/supabase";
-import { Session, SignUpWithPasswordCredentials } from "@supabase/supabase-js";
+import { Session } from "@supabase/supabase-js";
 import { Student } from "../lib/api";
 
 interface AuthContextType {
-  session: Session | null | undefined;
-  loading: boolean;
-  handleLogin: (credentials: {
-    email: string;
-    password: string;
-  }) => Promise<void>;
-}
-export interface UserInfo {
   session: Session | null;
   profile: Student | null;
-  loading?: boolean;
-  saveProfile?: (updatedProfile: Student, avatarUpdated: boolean) => void;
+  loading: boolean;
+  handleLogin: (credentials: { email: string; password: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-  const [userInfo, setUserInfo] = useState<UserInfo>({
+  const [userInfo, setUserInfo] = useState<{ session: Session | null; profile: Student | null }>({
     session: null,
     profile: null,
   });
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (credentials: SignUpWithPasswordCredentials) => {
-    if (!("email" in credentials)) return;
+  const handleLogin = async ({ email, password }: { email: string; password: string }) => {
     setLoading(true);
-    const { email, password } = credentials;
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      console.error(error.message);
-      setLoading(false)
-      return;
-    }
-
-    console.log("Logged in", data);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      console.log("Logged in", data);
+      setUserInfo((prev) => ({ ...prev, session: data.session }));
+     } catch (error: Error | unknown) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error("An unknown error occurred");
+      }
+     } finally {
+      setLoading(false);
+     }
   };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserInfo({ ...userInfo, session });
-      console.log(userInfo);
+      setUserInfo((prev) => ({ ...prev, session }));
     });
-    supabase.auth.onAuthStateChange((_event, session) => {
+
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserInfo({ session, profile: null });
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   return (

@@ -1,5 +1,3 @@
-"use client";
-
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
@@ -8,7 +6,6 @@ import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
-
 import {
   ArrowLeft,
   Trash2,
@@ -19,7 +16,7 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
-import { Student } from "../lib/api";
+import { StudentWithRides, studentWithRidesQuery } from "../lib/api";
 import {
   Dialog,
   DialogActions,
@@ -29,26 +26,15 @@ import {
 
 export default function StudentDetails() {
   const { id } = useParams();
-  const [student, setStudent] = useState<Student | null>(null);
+  const [student, setStudent] = useState<StudentWithRides | null>(null);
+  const [rideCount, setRideCount] = useState<number>(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
-
-  async function fetchStudentsDetail(id: string) {
-    const { data, error } = await supabase
-      .from("students")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) {
-      console.log(error);
-    } else {
-      return data;
-    }
-  }
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
   };
+
   async function deleteStudent(id: string) {
     const { error } = await supabase.from("students").delete().eq("id", id);
     if (error) {
@@ -59,9 +45,17 @@ export default function StudentDetails() {
   }
 
   useEffect(() => {
-    fetchStudentsDetail(id as string).then((data) => setStudent(data));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (id) {
+      studentWithRidesQuery(id).then((data) => {
+        if (data) {
+          setStudent(data as StudentWithRides); 
+          setRideCount(data.rides.length); 
+        }
+      });
+    }
+  }, [id]);
+
+const totalBikedAmount = student?.distance_to_school ? student.distance_to_school * rideCount : 0;
 
   return (
     <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh" }}>
@@ -105,8 +99,8 @@ export default function StudentDetails() {
           sx={{
             display: "flex",
             flexDirection: "column",
-            pt:2,
-            pb:2,
+            pt: 2,
+            pb: 2,
             alignItems: "center",
           }}
         >
@@ -128,7 +122,6 @@ export default function StudentDetails() {
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
-
               gap: 1,
               mb: 2,
             }}
@@ -209,7 +202,7 @@ export default function StudentDetails() {
           </Link>
         </Box>
 
-        <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4,  px:2, borderRadius:4}}>
+        <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4, px: 2, borderRadius: 4 }}>
           <Paper
             elevation={0}
             sx={{
@@ -236,7 +229,7 @@ export default function StudentDetails() {
               <Typography variant="body2" color="text.secondary">
                 Total Biked Amount
               </Typography>
-              <Typography variant="h6">120 km</Typography>
+              <Typography variant="h6">{totalBikedAmount} km</Typography>
             </Box>
           </Paper>
 
@@ -269,7 +262,7 @@ export default function StudentDetails() {
               <Typography variant="body2" color="text.secondary">
                 Total Number of Rides
               </Typography>
-              <Typography variant="h6">45 rides</Typography>
+              <Typography variant="h6">{rideCount} rides</Typography>
             </Box>
           </Paper>
         </Box>
@@ -301,9 +294,6 @@ export default function StudentDetails() {
                   alt="Cup"
                   style={{ width: 118, height: 64 }}
                 />
-                {/* {[1, 2, 3].map((i) => (
-                  <TreeDeciduous key={i} size={32} color="#2E9B6B" />
-                ))} */}
               </Box>
               <Typography variant="body2" color="text.secondary">
                 1,400 Trees planted
@@ -312,9 +302,7 @@ export default function StudentDetails() {
           </Box>
         </Box>
 
-        <Box
-          sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4,  px:2, borderRadius:4 }}
-        >
+        <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4, px: 2, borderRadius: 4 }}>
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
             Ride History
           </Typography>

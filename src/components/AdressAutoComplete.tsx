@@ -6,8 +6,8 @@ import PlacesAutocomplete, {
 } from "react-places-autocomplete";
 
 const SCHOOL_LOCATION = {
-  lat: 43.25983,
-  lng: -2.936812,
+  lat: 50.85045, 
+  lng: 4.34878
 };
 
 export const AddressAutocomplete = ({
@@ -102,9 +102,11 @@ export const AddressAutocomplete = ({
         onAddressChange(newAddress);
       }}
       onSelect={handleSelect}
-      // searchOptions={{
-      // //   componentRestrictions: { country: "es" }, 
-      // }}  
+      searchOptions={{
+      
+        componentRestrictions: { country: "be" }, 
+        
+      }}  
     >
       {({ getInputProps, suggestions, getSuggestionItemProps }) => (
         <Box sx={{ position: "relative" }}>

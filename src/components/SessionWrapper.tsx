@@ -1,17 +1,46 @@
 import { Navigate } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
-
-//session wrapper to prevent from entering if unauth
 function Wrapper({ children }: { children: ReactNode }) {
-  const { session, loading } = UserAuth(); 
+  const { session, loading } = UserAuth();
+  const [role, setRole] = useState<string | null>(null);
+  const [checkingRole, setCheckingRole] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    if (session) {
+      const fetchUserRole = async () => {
+        setCheckingRole(true);
+        const { data: teacher, error } = await supabase
+          .from("teachers")
+          .select("id") 
+          .eq("id", session.user.id) 
+          .single();
+
+        if (error || !teacher) {
+          setRole("student");
+        } else {
+          setRole("teacher");
+        }
+        setCheckingRole(false);
+      };
+
+      fetchUserRole();
+    } else {
+      setCheckingRole(false);
+    }
+  }, [session]);
+
+  if (loading || checkingRole) {
     return <div>Loading...</div>;
   }
 
-  return session ? <>{children}</> : <Navigate to="/login/teacher" />;
+  if (!session || role !== "teacher") {
+    return <Navigate to="/login/teacher" />;
+  }
+
+  return <>{children}</>;
 }
 
 export default Wrapper;

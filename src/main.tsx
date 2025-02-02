@@ -10,15 +10,16 @@ const libraries: Libraries = ["places"];
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <AuthContextProvider>
     <LoadScript
       googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_KEY}
       libraries={libraries}
+      language="en"
     >
-      <AuthContextProvider>
         <ThemeProvider theme={theme}>
           <RouterProvider router={router} />
         </ThemeProvider>
-      </AuthContextProvider>
     </LoadScript>
+      </AuthContextProvider>
   </React.StrictMode>
 );

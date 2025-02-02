@@ -13,8 +13,8 @@ export const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: "9999px", // Full rounded corners
-          textTransform: "none", // Prevents all-caps text
+          borderRadius: "9999px", 
+          textTransform: "none",
           padding: "12px 0",
           fontSize: "1rem",
         },

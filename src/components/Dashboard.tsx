@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
@@ -15,8 +13,6 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
 import Button from "@mui/material/Button";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import {
   Filter as FilterList,
@@ -26,6 +22,7 @@ import {
   Trash2,
   UserMinus,
   X,
+  User,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -48,12 +45,15 @@ import {
   Chip,
   Collapse,
   TextField,
+  useMediaQuery,
 } from "@mui/material";
 import FilterPanel from "./FilterPanel";
+import ManagePanel from "./ManagePanel";
+import ExportPanel from "./ExportPanel";
 
 export default function TeacherDashboard() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,12 +62,27 @@ export default function TeacherDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<boolean | null>(null);
   const [showFilter, setShowFilter] = useState(false);
-  const studentsRef = useRef<Student[]>([]); // Ref to store all students data
+  const [showManage, setShowManage] = useState(false);
+  const [showExportPanel, setShowExportPanel] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+
+  const studentsRef = useRef<Student[]>([]);
+  const isSmallScreen = useMediaQuery("(max-width:400px)");
 
   const [filters, setFilters] = useState({
     sortByYear: false,
     sortByRides: false,
     sortByClass: false,
+  });
+  const [sortDirections, setSortDirections] = useState({
+    sortByYear: "asc",
+    sortByRides: "asc",
+    sortByClass: "asc",
+  });
+
+  const [rideFilter] = useState<{ minRides: number; maxRides: number }>({
+    minRides: 0,
+    maxRides: Infinity,
   });
 
   const [teacher, setTeacher] = useState<Teacher | null>(null);
@@ -111,22 +126,37 @@ export default function TeacherDashboard() {
       );
     }
 
+    result = result.filter((student) => {
+      const totalRides = student.ride_count * student.distance_to_school;
+      return (
+        totalRides >= rideFilter.minRides && totalRides <= rideFilter.maxRides
+      );
+    });
+
     if (filters.sortByClass) {
-      result = result.sort((a, b) => a.class.localeCompare(b.class));
+      result = result.sort((a, b) => {
+        const comparison = a.class.localeCompare(b.class);
+        return sortDirections.sortByClass === "asc" ? comparison : -comparison;
+      });
     }
 
     if (filters.sortByYear) {
-      result = result.sort((a, b) => a.starting_year - b.starting_year);
+      result = result.sort((a, b) => {
+        const comparison = a.starting_year - b.starting_year;
+        return sortDirections.sortByYear === "asc" ? comparison : -comparison;
+      });
     }
 
     if (filters.sortByRides) {
-      result = result.sort(
-        (a, b) => a.distance_to_school - b.distance_to_school
-      );
+      result = result.sort((a, b) => {
+        const comparison = b.ride_count - a.ride_count;
+        return sortDirections.sortByRides === "asc" ? comparison : -comparison;
+      });
     }
 
     setFilteredStudents(result);
-  }, [activeFilter, searchQuery, filters]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter, searchQuery, filters, rideFilter]);
 
   const handleToggle = (value: string) => () => {
     const currentIndex = selectedStudents.indexOf(value);
@@ -141,35 +171,54 @@ export default function TeacherDashboard() {
     setSelectedStudents(newChecked);
   };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-
-  const handleAction = async (action: string) => {
+  const handleAction = async (
+    action: string,
+    fields?: string[],
+    filters?: { classFilter?: string }
+  ) => {
     let result;
-    switch (action) {
-      case "delete":
-        result = await deleteStudents(selectedStudents);
-        setIsDeleteDialogOpen(false);
-        break;
-      case "deactivate":
-        result = await deactivateStudents(selectedStudents);
-        setIsDeactivateDialogOpen(false);
-        break;
-      case "export":
-        result = await exportStudentsCsv(selectedStudents);
-        break;
-    }
+    try {
+      switch (action) {
+        case "delete":
+          result = await deleteStudents(selectedStudents);
+          setIsDeleteDialogOpen(false);
+          break;
+        case "deactivate":
+          result = await deactivateStudents(selectedStudents);
+          setIsDeactivateDialogOpen(false);
+          break;
+        case "export":
+          if (
+            (!selectedStudents || selectedStudents.length === 0) &&
+            !filters?.classFilter
+          ) {
+            throw new Error(
+              "Provide either students or a class filter"
+            );
+          }
+          result = await exportStudentsCsv(
+            selectedStudents,
+            fields as string[],
+            filters?.classFilter
+          );
+          setError("");
 
-    if (result) {
-      fetchUsers().then((data) => setFilteredStudents(data));
-    }
+          break;
+      }
 
-    handleMenuClose();
+      if (result) {
+        fetchUsers().then((data) => setFilteredStudents(data));
+      }
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred."
+      );
+    } finally {
+      handleMenuClose();
+    }
   };
 
   const handleSearchClick = () => {
@@ -183,17 +232,47 @@ export default function TeacherDashboard() {
     setShowFilter(!showFilter);
   };
 
-  const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = event.target;
+  const handleManageClick = () => {
+    setShowManage(!showManage);
+  };
+  const handleExportPanelClick = () => {
+    setShowExportPanel(!showExportPanel);
+  };
+
+  const handleFilterChange = (
+    event: React.ChangeEvent<HTMLInputElement> & {
+      target: {
+        name: string;
+        checked: boolean;
+        sortDirection?: "asc" | "desc";
+      };
+    }
+  ) => {
+    const { name, checked, sortDirection } = event.target;
 
     setFilters((prevFilters) => ({
       ...prevFilters,
       [name]: checked,
     }));
-  };
 
+    if (sortDirection) {
+      setSortDirections((prev) => ({
+        ...prev,
+        [name]: sortDirection,
+      }));
+    }
+  };
+  const clearError = () => setError(undefined);
   return (
-    <Box sx={{ pb: 7, bgcolor: "#FFFFFF", minHeight: "100vh" }}>
+    <Box
+      sx={{
+        pb: { xs: 3, sm: 7 },
+        bgcolor: "#FFFFFF",
+        minHeight: "100vh",
+        width: "100%",
+        margin: "auto",
+      }}
+    >
       <AppBar
         position="static"
         elevation={0}
@@ -202,18 +281,22 @@ export default function TeacherDashboard() {
           color: "text.primary",
           borderBottom: "1px solid",
           borderColor: "divider",
+          p: 0.5,
         }}
       >
         <Toolbar>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar sx={{ width: 32, height: 32 }} />
-            <Typography variant="subtitle1" component="h1" fontWeight={500}>
+            <Typography
+              fontSize={isSmallScreen ? "12px" : "22px"}
+              component="h1"
+              fontWeight={"500"}
+            >
               Teacher Dashboard
             </Typography>
           </Stack>
 
           <Box sx={{ flexGrow: 1 }} />
-
           <IconButton>
             <Link to="/adduser">
               <UserPlus />
@@ -227,14 +310,14 @@ export default function TeacherDashboard() {
               sx={{
                 bgcolor: "primary",
                 color: "white",
-                borderRadius: "20px",
+                borderRadius: "15px",
+                p: 1,
+
                 marginLeft: 3,
-                paddingX: 1,
-                paddingY: 1,
                 "&:hover": {
                   bgcolor: "error.dark",
                 },
-                fontWeight: 600,
+                fontWeight: 500,
                 transition: "all 0.3s ease",
               }}
             >
@@ -243,9 +326,18 @@ export default function TeacherDashboard() {
           )}
         </Toolbar>
       </AppBar>
-
       <Container>
-        <Typography variant="h6" sx={{ mt: 3, mb: 2, fontWeight: 500 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            mt: 3,
+            mb: 2,
+            fontWeight: 500,
+            textAlign: "left",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           Welcome, Mr. {teacher?.name}
         </Typography>
         <Box
@@ -357,8 +449,16 @@ export default function TeacherDashboard() {
                     alignItems: "center",
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <ListItemIcon>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: "auto", mr: 1 }}>
                       <Checkbox
                         edge="start"
                         checked={
@@ -366,20 +466,21 @@ export default function TeacherDashboard() {
                         }
                         tabIndex={-1}
                         disableRipple
+                        size="small"
                       />
                     </ListItemIcon>
                     <Link
                       to={`/student/${student.id}`}
-                      style={{ textDecoration: "none" }}
+                      style={{ textDecoration: "none", flex: 1, minWidth: 0 }}
                     >
                       <ListItemText
                         primary={student.name}
                         slotProps={{
                           primary: {
-                            sx: { fontWeight: 500 },
-                          },
-                          secondary: {
-                            sx: { color: "text.secondary" },
+                            noWrap: true,
+                            sx: {
+                              fontSize: isSmallScreen ? "0.875rem" : "1rem",
+                            },
                           },
                         }}
                       />
@@ -391,14 +492,14 @@ export default function TeacherDashboard() {
                       display: "flex",
                       alignItems: "center",
                       gap: 1,
-                      mr: 2,
+                      ml: 1,
                     }}
                   >
                     <Typography
                       variant="body2"
-                      sx={{ color: "text.secondary" }}
+                      sx={{ fontSize: isSmallScreen ? "0.75rem" : "0.875rem" }}
                     >
-                      {student.class}
+                      Class: {student.class}
                     </Typography>
                     <Box
                       sx={{
@@ -419,57 +520,62 @@ export default function TeacherDashboard() {
 
         <Box
           sx={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            bgcolor: "background.paper",
-            borderTop: "1px solid",
-            borderColor: "divider",
-            p: 2,
+            position: "sticky",
+            bottom: 16,
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "end",
+            justifyContent: "center",
+            gap: 2,
           }}
         >
           <Button
-            fullWidth
+            type="submit"
             variant="contained"
-            onClick={handleMenuClick}
-            disabled={selectedStudents.length === 0}
+            onClick={handleManageClick}
             endIcon={<ChevronUp size={20} />}
             sx={{
-              bgcolor: "primary.main",
+              bgcolor: "#35D187",
               color: "white",
-              py: 1.5,
-              borderRadius: 2,
+              py: 2,
+              width: 223,
+              px: 2,
+              borderRadius: 3,
               textTransform: "none",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+              "&:hover": {
+                bgcolor: "#2bb974",
+              },
             }}
           >
-            Manage students
+            <User size={24} />
+            <Typography fontSize={17} sx={{ marginLeft: 1 }}>
+              Manage students
+            </Typography>
           </Button>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            anchorOrigin={{
-              vertical: "top",
-              horizontal: "center",
-            }}
-            transformOrigin={{
-              vertical: "bottom",
-              horizontal: "center",
-            }}
-          >
-            <MenuItem onClick={() => setIsDeactivateDialogOpen(true)}>
-              Deactivate selected students
-            </MenuItem>
-            <MenuItem onClick={() => setIsDeleteDialogOpen(true)}>
-              Delete selected students
-            </MenuItem>
-            <MenuItem onClick={() => handleAction("export")}>
-              Export students CSV file
-            </MenuItem>
-          </Menu>
         </Box>
+        <ManagePanel
+          showManagePanel={showManage}
+          onClose={handleManageClick}
+          onDeactivate={() => setIsDeactivateDialogOpen(true)}
+          onDelete={() => setIsDeleteDialogOpen(true)}
+          onExportCsv={handleExportPanelClick}
+          selectedStudentsCount={selectedStudents.length}
+        />
+        <ExportPanel
+          onClose={handleExportPanelClick}
+          showExportPanel={showExportPanel}
+          onExportCsv={(fields, filters) =>
+            handleAction("export", fields, filters)
+          }
+          selectedStudentsCount={selectedStudents.length}
+          error={error}
+          clearError={clearError} // Pass this function as a prop
+
+        />
       </Container>
+
       <Dialog
         slotProps={{
           paper: { sx: { borderRadius: "28px" } },

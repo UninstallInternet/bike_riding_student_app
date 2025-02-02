@@ -14,8 +14,7 @@ import {
 } from "@mui/material";
 import { CircleCheckBig, LockIcon } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "../lib/supabase"; // Adjust according to where you import supabase from
-
+import { supabase } from "../lib/supabase"; 
 export default function ResetPassword() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");

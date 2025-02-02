@@ -8,7 +8,7 @@ import Dashboard from "./components/Dashboard";
 import AddUser from "./components/AddStudent";
 import ResetPassword from "./components/ResetPassWord";
 import TeacherRegister from "./components/TeacherRegister";
-// import Wrapper from "./components/SessionWrapper";
+import Wrapper from "./components/SessionWrapper";
 import StudentDetails from "./components/StudentDetail";
 import EditStudent from "./components/EditStudent";
 
@@ -20,10 +20,28 @@ export const router = createBrowserRouter([
   { path: "/login/passwordreset", element: <ResetPassword /> },
   {
     path: "/dashboard",
-    element: <Dashboard />,
+    element: (
+      <Wrapper>
+        <Dashboard />,
+      </Wrapper>
+    ),
   },
-  { path: "/adduser", element: <AddUser /> },
+  {
+    path: "/adduser",
+    element: (
+      <Wrapper>
+        <AddUser />
+      </Wrapper>
+    ),
+  },
   { path: "/register", element: <TeacherRegister /> },
   { path: "/student/:id", element: <StudentDetails /> },
-  { path: "/edit/:id", element: <EditStudent /> },
+  {
+    path: "/edit/:id",
+    element: (
+      <Wrapper>
+        <EditStudent />
+      </Wrapper>
+    ),
+  },
 ]);
