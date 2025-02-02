@@ -447,6 +447,7 @@ export default function TeacherDashboard() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    m:0.5,
                   }}
                 >
                   <Box
@@ -538,9 +539,9 @@ export default function TeacherDashboard() {
             sx={{
               bgcolor: "#35D187",
               color: "white",
-              py: 2,
-              width: 223,
-              px: 2,
+              py:2,
+              width: isSmallScreen? 180 : 205,
+              px: 1,
               borderRadius: 3,
               textTransform: "none",
               boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
@@ -549,8 +550,8 @@ export default function TeacherDashboard() {
               },
             }}
           >
-            <User size={24} />
-            <Typography fontSize={17} sx={{ marginLeft: 1 }}>
+            <User size={18} />
+            <Typography fontSize={isSmallScreen? 14 : 17} sx={{ marginLeft: 1 }}>
               Manage students
             </Typography>
           </Button>
@@ -571,7 +572,7 @@ export default function TeacherDashboard() {
           }
           selectedStudentsCount={selectedStudents.length}
           error={error}
-          clearError={clearError} // Pass this function as a prop
+          clearError={clearError} 
 
         />
       </Container>
@@ -645,7 +646,7 @@ export default function TeacherDashboard() {
               textAlign: "center",
             }}
           >
-            Are you sure you want to deactivate these students student? This
+            Are you sure you want to deactivate these students? This
             action cannot be undone.{" "}
           </DialogContentText>
         </DialogContent>

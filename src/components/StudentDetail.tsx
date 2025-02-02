@@ -5,30 +5,39 @@ import IconButton from "@mui/material/IconButton";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
-import Divider from "@mui/material/Divider";
 import {
   ArrowLeft,
   Trash2,
   Bike,
-  ChevronRight,
   PencilLine,
+  UserMinus,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useEffect, useState } from "react";
-import { StudentWithRides, studentWithRidesQuery } from "../lib/api";
+import {
+  deactivateStudents,
+  fetchRides,
+  Rides,
+  StudentWithRides,
+  studentWithRidesQuery,
+} from "../lib/api";
 import {
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
 } from "@mui/material";
+import RideHistory from "./SingleRides";
 
 export default function StudentDetails() {
   const { id } = useParams();
   const [student, setStudent] = useState<StudentWithRides | null>(null);
   const [rideCount, setRideCount] = useState<number>(0);
+  const [singleRides, setSingleRides] = useState<Rides[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const handleCloseDialog = () => {
@@ -48,14 +57,22 @@ export default function StudentDetails() {
     if (id) {
       studentWithRidesQuery(id).then((data) => {
         if (data) {
-          setStudent(data as StudentWithRides); 
-          setRideCount(data.rides.length); 
+          setStudent(data as StudentWithRides);
+          setRideCount(data.rides.length);
         }
       });
     }
   }, [id]);
 
-const totalBikedAmount = student?.distance_to_school ? student.distance_to_school * rideCount : 0;
+  useEffect(() => {
+    fetchRides(id as string).then((data) => setSingleRides(data));
+  }, []);
+
+  console.log(singleRides);
+
+  const totalBikedAmount = student?.distance_to_school
+    ? student.distance_to_school * rideCount
+    : 0;
 
   return (
     <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh" }}>
@@ -128,7 +145,7 @@ const totalBikedAmount = student?.distance_to_school ? student.distance_to_schoo
           >
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Typography variant="body2" color="black">
-                Tag Number - QR CODE:
+                Bike QR Code:
               </Typography>
               <Typography
                 variant="body2"
@@ -201,7 +218,6 @@ const totalBikedAmount = student?.distance_to_school ? student.distance_to_schoo
             </Button>
           </Link>
         </Box>
-
         <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4, px: 2, borderRadius: 4 }}>
           <Paper
             elevation={0}
@@ -266,7 +282,6 @@ const totalBikedAmount = student?.distance_to_school ? student.distance_to_schoo
             </Box>
           </Paper>
         </Box>
-
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
             Your Environmental Impact
@@ -301,49 +316,42 @@ const totalBikedAmount = student?.distance_to_school ? student.distance_to_schoo
             </Box>
           </Box>
         </Box>
-
-        <Box sx={{ bgcolor: "#F8F9FB", pt: 3, pb: 4, px: 2, borderRadius: 4 }}>
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
-            Ride History
-          </Typography>
-          <Paper
-            elevation={0}
+        <RideHistory singleRides={singleRides} />{" "}
+        <Box
+          sx={{
+            position: "sticky",
+            bottom: 16,
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "end",
+            justifyContent: "center",
+            gap: 2,
+          }}
+        >
+          <Button
+            type="submit"
+            variant="contained"
+            onClick={() => setIsDeactivateDialogOpen(true)}
             sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 2,
+              bgcolor: "#35D187",
+              color: "white",
+              position: "sticky",
+              py: 2,
+              mt: 2,
+              px: 1,
+              borderRadius: 3,
+              right: -320,
+              textTransform: "none",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+              "&:hover": {
+                bgcolor: "#2bb974",
+              },
             }}
           >
-            <Button
-              fullWidth
-              sx={{
-                p: 2,
-                justifyContent: "flex-start",
-                textTransform: "none",
-              }}
-            >
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                  17,803 km
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  November 18, 2024
-                </Typography>
-              </Box>
-              <ChevronRight size={20} />
-            </Button>
-            <Divider />
-            <Box
-              sx={{
-                height: 120,
-                bgcolor: "grey.100",
-                borderBottomLeftRadius: "inherit",
-                borderBottomRightRadius: "inherit",
-              }}
-            >
-              {/* Map placeholder */}
-            </Box>
-          </Paper>
+            <UserMinus size={18} />
+            <Typography sx={{ marginLeft: 1 }}>Deactivate Student</Typography>
+          </Button>
         </Box>
       </Container>
       <Dialog
@@ -351,7 +359,7 @@ const totalBikedAmount = student?.distance_to_school ? student.distance_to_schoo
           paper: { sx: { borderRadius: "28px" } },
         }}
         open={isDialogOpen}
-        onClose={handleCloseDialog}
+        onClose={() => setIsDeactivateDialogOpen(false)} // Fix this line
         sx={{ borderRadius: "28px" }}
       >
         <DialogContent
@@ -384,6 +392,57 @@ const totalBikedAmount = student?.distance_to_school ? student.distance_to_schoo
           </Button>
           <Button
             onClick={() => deleteStudent(student?.id as string)}
+            autoFocus
+          >
+            <Typography sx={{ color: "black" }}>Yes</Typography>
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        slotProps={{
+          paper: { sx: { borderRadius: "28px" } },
+        }}
+        open={isDeactivateDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        sx={{ borderRadius: "28px" }}
+      >
+        <DialogContent
+          sx={{
+            width: 300,
+            height: 185,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          <UserMinus size={48} color="#718EBF" />
+          <DialogContentText
+            sx={{
+              fontSize: 18,
+              fontWeight: 400,
+              color: "black",
+              textAlign: "center",
+            }}
+          >
+            Are you sure you want to deactivate this student? This action cannot
+            be undone.{" "}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDeactivateDialogOpen(false)} autoFocus>
+            <Typography sx={{ color: "#737373" }}>Cancel</Typography>{" "}
+          </Button>
+          <Button
+            onClick={() => {
+              if (student?.id) {
+                deactivateStudents([student.id]).then(() => {
+                  setIsDeactivateDialogOpen(false);
+                  navigate("/dashboard");
+                });
+              }
+            }}
             autoFocus
           >
             <Typography sx={{ color: "black" }}>Yes</Typography>

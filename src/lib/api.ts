@@ -205,10 +205,21 @@ export const studentWithRidesQuery = async (id: string) => {
 
   if (error) {
     console.error("Error fetching student details:", error);
-    return null; 
+    return null;
   }
 
   return data;
+};
+export const fetchRides = async (studentId: string): Promise<Rides[]> => {
+  const { data, error } = await supabase
+    .from("rides")
+    .select("*")
+    .eq("student_id", studentId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data as Rides[];
 };
 
 //types coming from supabase
@@ -218,3 +229,4 @@ export type StudentWithRides = Awaited<
 
 export type Student = Database["public"]["Tables"]["students"]["Row"];
 export type Teacher = Database["public"]["Tables"]["teachers"]["Row"];
+export type Rides = Database["public"]["Tables"]["rides"]["Row"];

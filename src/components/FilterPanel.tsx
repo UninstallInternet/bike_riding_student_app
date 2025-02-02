@@ -54,7 +54,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ showFilter, onClose, filters,
         sx={{
           display: 'flex',
           alignItems: 'center',
-          width: '45%',
+          width: '55%',
           mb: 1
         }}
       >
