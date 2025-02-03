@@ -21,7 +21,7 @@ import {
   DialogContent,
   DialogContentText,
 } from "@mui/material";
-import RideHistory from "./SingleRides";
+import RideHistory from "./RidesHistory";
 import DeactivateButton from "./DeactivateButton";
 import DeactivateDialog from "./DeactivateDialog";
 import BikingStatsCard from "./BikingStatsCard";
