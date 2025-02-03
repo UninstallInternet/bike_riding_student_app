@@ -13,20 +13,12 @@ import { supabase } from "./supabase";
 //   console.log(data);
 // };
 
-export const handleLogout = async (navigate: (path: string) => void) => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error("Error logging out", error.message);
-  } else {
-    console.log("Logged out successfully");
-    navigate("/"); // Call the passed navigate function
-  }
-};
+
 
 export const fetchUsers = async () => {
   const { data, error } = await supabase.from("students").select(
     `*,
-      rides (id)` // Join the rides table and fetch the ride IDs
+      rides (id)`
   );
 
   if (error) {
@@ -36,7 +28,7 @@ export const fetchUsers = async () => {
     // Calculate ride_count for each student
     const studentsWithRides = data.map((student) => ({
       ...student,
-      ride_count: student.rides.length, // Count the number of rides
+      ride_count: student.rides.length, 
     }));
     return studentsWithRides;
   }
