@@ -62,6 +62,7 @@ export default function StudentDetails() {
 
   useEffect(() => {
     fetchRides(id as string).then((data) => setSingleRides(data));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   console.log(singleRides);
