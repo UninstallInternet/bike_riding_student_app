@@ -13,7 +13,15 @@ import { supabase } from "./supabase";
 //   console.log(data);
 // };
 
-
+export const handleLogout = async (navigate: (path: string) => void) => {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error("Error logging out", error.message);
+  } else {
+    console.log("Logged out successfully");
+    navigate("/");
+  }
+};
 
 export const fetchUsers = async () => {
   const { data, error } = await supabase.from("students").select(

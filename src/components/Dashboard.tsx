@@ -31,6 +31,7 @@ import {
   exportStudentsCsv,
   fetchTeacher,
   fetchUsers,
+  handleLogout,
   Student,
   Teacher,
 } from "../lib/api";
@@ -49,7 +50,6 @@ import {
 import FilterPanel from "./FilterPanel";
 import ManagePanel from "./ManagePanel";
 import ExportPanel from "./ExportPanel";
-import { supabase } from "../lib/supabase";
 
 export default function TeacherDashboard() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -89,16 +89,6 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
 
   const { session } = UserAuth();
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error logging out", error.message);
-    } else {
-      console.log("Logged out successfully");
-      navigate("/");
-    }
-  };
 
   useEffect(() => {
     fetchUsers()
@@ -305,7 +295,7 @@ export default function TeacherDashboard() {
           {session && (
             <Button
               variant="contained"
-              onClick={handleLogout}
+              onClick={() => handleLogout(navigate)}
               sx={{
                 bgcolor: "primary",
                 color: "white",
