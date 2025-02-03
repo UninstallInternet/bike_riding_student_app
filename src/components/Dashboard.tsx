@@ -31,10 +31,10 @@ import {
   exportStudentsCsv,
   fetchTeacher,
   fetchUsers,
+  handleLogout,
   Student,
   Teacher,
 } from "../lib/api";
-import { supabase } from "../lib/supabase";
 import { UserAuth } from "../context/AuthContext";
 import {
   Dialog,
@@ -89,15 +89,6 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
 
   const { session } = UserAuth();
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error logging out", error.message);
-    } else {
-      console.log("Logged out successfully");
-      navigate("/");
-    }
-  };
 
   useEffect(() => {
     fetchUsers()
@@ -155,7 +146,7 @@ export default function TeacherDashboard() {
     }
 
     setFilteredStudents(result);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter, searchQuery, filters, rideFilter]);
 
   const handleToggle = (value: string) => () => {
@@ -195,9 +186,7 @@ export default function TeacherDashboard() {
             (!selectedStudents || selectedStudents.length === 0) &&
             !filters?.classFilter
           ) {
-            throw new Error(
-              "Provide either students or a class filter"
-            );
+            throw new Error("Provide either students or a class filter");
           }
           result = await exportStudentsCsv(
             selectedStudents,
@@ -306,7 +295,7 @@ export default function TeacherDashboard() {
           {session && (
             <Button
               variant="contained"
-              onClick={handleLogout}
+              onClick={() => handleLogout(navigate)}
               sx={{
                 bgcolor: "primary",
                 color: "white",
@@ -447,7 +436,7 @@ export default function TeacherDashboard() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    m:0.5,
+                    m: 0.5,
                   }}
                 >
                   <Box
@@ -539,8 +528,8 @@ export default function TeacherDashboard() {
             sx={{
               bgcolor: "#35D187",
               color: "white",
-              py:2,
-              width: isSmallScreen? 180 : 205,
+              py: 2,
+              width: isSmallScreen ? 180 : 205,
               px: 1,
               borderRadius: 3,
               textTransform: "none",
@@ -551,7 +540,10 @@ export default function TeacherDashboard() {
             }}
           >
             <User size={18} />
-            <Typography fontSize={isSmallScreen? 14 : 17} sx={{ marginLeft: 1 }}>
+            <Typography
+              fontSize={isSmallScreen ? 14 : 17}
+              sx={{ marginLeft: 1 }}
+            >
               Manage students
             </Typography>
           </Button>
@@ -572,8 +564,7 @@ export default function TeacherDashboard() {
           }
           selectedStudentsCount={selectedStudents.length}
           error={error}
-          clearError={clearError} 
-
+          clearError={clearError}
         />
       </Container>
 
@@ -646,8 +637,8 @@ export default function TeacherDashboard() {
               textAlign: "center",
             }}
           >
-            Are you sure you want to deactivate these students? This
-            action cannot be undone.{" "}
+            Are you sure you want to deactivate these students? This action
+            cannot be undone.{" "}
           </DialogContentText>
         </DialogContent>
         <DialogActions>

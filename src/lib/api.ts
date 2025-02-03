@@ -13,6 +13,16 @@ import { supabase } from "./supabase";
 //   console.log(data);
 // };
 
+export const handleLogout = async (navigate: (path: string) => void) => {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error("Error logging out", error.message);
+  } else {
+    console.log("Logged out successfully");
+    navigate("/"); // Call the passed navigate function
+  }
+};
+
 export const fetchUsers = async () => {
   const { data, error } = await supabase.from("students").select(
     `*,
@@ -198,7 +208,7 @@ export const studentWithRidesQuery = async (id: string) => {
   const { data, error } = await supabase
     .from("students")
     .select(
-      `id, name, class, address, distance_to_school, bike_qr_code, starting_year,is_active, rides(id)`
+      `id, name, class, address, distance_to_school, bike_qr_code, starting_year,is_active, rides(id,ride_date)`
     )
     .eq("id", id)
     .single();

@@ -4,7 +4,6 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
-import Paper from "@mui/material/Paper";
 import { ArrowLeft, Trash2, Bike, PencilLine } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -25,6 +24,7 @@ import {
 import RideHistory from "./SingleRides";
 import DeactivateButton from "./DeactivateButton";
 import DeactivateDialog from "./DeactivateDialog";
+import BikingStatsCard from "./BikingStatsCard";
 
 export default function StudentDetails() {
   const { id } = useParams();
@@ -214,78 +214,12 @@ export default function StudentDetails() {
             </Button>
           </Link>
         </Box>
-        <Box
-          sx={{
-            bgcolor: "#F8F9FB",
-            pt: 3,
-            pb: 4,
-            px: 2,
-            borderRadius: 4,
-          }}
-        >
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              mb: 2,
-              border: "1px solid ",
-              borderColor: "divider",
-              borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: 1,
-                color: "warning.dark",
-              }}
-            >
-              <img src="/cup.png" alt="Cup" style={{ width: 42, height: 42 }} />{" "}
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Total Biked Amount
-              </Typography>
-              <Typography variant="h6">{totalBikedAmount} km</Typography>
-            </Box>
-          </Paper>
+      <BikingStatsCard
+      rideCount={rideCount}
+      totalBikedAmount={totalBikedAmount}
+      />
 
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <Box
-              sx={{
-                p: 1,
-                borderRadius: 1,
-                color: "error.dark",
-              }}
-            >
-              <img
-                src="/bikeup.png"
-                alt="Cup"
-                style={{ width: 42, height: 42 }}
-              />{" "}
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Total Number of Rides
-              </Typography>
-              <Typography variant="h6">{rideCount} rides</Typography>
-            </Box>
-          </Paper>
-        </Box>
+
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
             Your Environmental Impact

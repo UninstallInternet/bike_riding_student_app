@@ -28,7 +28,7 @@ const RideHistory: React.FC<RideHistoryProps> = ({ singleRides }) => {
           mt: 2,
           bgcolor: "white",
           borderRadius: 5,
-          textAlign: 'center',
+          textAlign: 'start',
         }}
       >
         <Typography variant="body1" color="text.primary">

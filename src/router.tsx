@@ -11,10 +11,12 @@ import TeacherRegister from "./components/TeacherRegister";
 import Wrapper from "./components/SessionWrapper";
 import StudentDetails from "./components/StudentDetail";
 import EditStudent from "./components/EditStudent";
+import StudentDashboard from "./components/StudentDashboard";
 
 export const router = createBrowserRouter([
   { path: "/", element: <App /> },
   { path: "/login/teacher", element: <TeacherLoginPage /> },
+  { path: "/student/dashboard", element: <StudentDashboard /> },
   { path: "/login/student", element: <StudentLoginPage /> },
   { path: "/login/reset", element: <SendResetLink /> },
   { path: "/login/passwordreset", element: <ResetPassword /> },

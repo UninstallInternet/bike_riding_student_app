@@ -9,8 +9,41 @@ import {
   Typography,
 } from "@mui/material";
 import { LogInIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useState, FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 export default function StudentLoginPage() {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const navigate = useNavigate();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setMessage("");
+    setLoading(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+
+      setEmail("");
+      setPassword("");
+      return;
+    }
+
+    if (data) {
+      navigate("/student/dashboard");
+      return null;
+    }
+  };
   return (
     <Box
       sx={{
@@ -60,6 +93,7 @@ export default function StudentLoginPage() {
 
           <Box
             component="form"
+            onSubmit={handleSubmit}
             sx={{
               width: "100%",
               display: "flex",
@@ -67,32 +101,46 @@ export default function StudentLoginPage() {
               gap: 2,
             }}
           >
+            {" "}
+            {message && (
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{ textAlign: "center" }}
+              >
+                {message}
+              </Typography>
+            )}
             <TextField
               fullWidth
               placeholder="Email or Username"
               variant="outlined"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
                 },
               }}
             />
-
             <TextField
               fullWidth
               type="password"
               placeholder="Password"
               variant="outlined"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
                 },
               }}
             />
-
             <Button
+              type="submit"
               variant="contained"
               fullWidth
+              disabled={loading}
               sx={{
                 bgcolor: "#34D399",
                 "&:hover": {
@@ -103,9 +151,8 @@ export default function StudentLoginPage() {
                 mt: 1,
               }}
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </Button>
-
             <Link
               to="/login/reset"
               style={{
