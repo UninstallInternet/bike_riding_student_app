@@ -1,76 +1,104 @@
-import { useState } from 'react';
-import { Box, FormGroup, FormControlLabel, Checkbox, Slide, Typography, IconButton } from "@mui/material";
+import { useState } from "react";
+import {
+  Box,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Slide,
+  Typography,
+  IconButton,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { X, ChevronUp, ChevronDown } from "lucide-react";
+import { classes } from "../lib/staticConsts";
 
 interface FilterPanelProps {
   showFilter: boolean;
   onClose: () => void;
-  filters: { 
-    sortByYear: boolean; 
-    sortByRides: boolean; 
-    sortByClass: boolean; 
+  filters: {
+    sortByYear: boolean;
+    sortByRides: boolean;
+    sortByClass: boolean;
+    classFilter: string;
   };
-  onFilterChange: (event: React.ChangeEvent<HTMLInputElement> & { target: { sortDirection?: 'asc' | 'desc' }}) => void;
+  onFilterChange: (
+    event: React.ChangeEvent<HTMLInputElement> & {
+      target: { sortDirection?: "asc" | "desc"; name?: string; value?: string };
+    }
+  ) => void;
 }
 
-type SortKey = 'sortByYear' | 'sortByRides' | 'sortByClass';
-type SortDirections = Record<SortKey, 'asc' | 'desc'>;
+type SortKey = "sortByYear" | "sortByRides" | "sortByClass";
+type SortDirections = Record<SortKey, "asc" | "desc">;
 
-const FilterPanel: React.FC<FilterPanelProps> = ({ showFilter, onClose, filters, onFilterChange }) => {
+const FilterPanel: React.FC<FilterPanelProps> = ({
+  showFilter,
+  onClose,
+  filters,
+  onFilterChange,
+}) => {
   const [sortDirections, setSortDirections] = useState<SortDirections>({
-    sortByYear: 'asc',
-    sortByRides: 'asc',
-    sortByClass: 'asc'
+    sortByYear: "asc",
+    sortByRides: "asc",
+    sortByClass: "asc",
   });
+  const [classFilter, setClassFilter] = useState("");
 
   const handleSortDirectionToggle = (filterName: SortKey) => {
-    const newDirection = sortDirections[filterName] === 'asc' ? 'desc' : 'asc';
-    setSortDirections(prev => ({
+    const newDirection = sortDirections[filterName] === "asc" ? "desc" : "asc";
+    setSortDirections((prev) => ({
       ...prev,
-      [filterName]: newDirection
+      [filterName]: newDirection,
     }));
 
     const syntheticEvent = {
       target: {
         name: filterName,
         checked: filters[filterName],
-        sortDirection: newDirection
-      }
-    } as React.ChangeEvent<HTMLInputElement> & { target: { sortDirection: 'asc' | 'desc' }};
-    
+        sortDirection: newDirection,
+      },
+    } as React.ChangeEvent<HTMLInputElement> & {
+      target: { sortDirection: "asc" | "desc" };
+    };
+
     onFilterChange(syntheticEvent);
   };
 
   const renderSortItems = () => {
     const sortItems: { key: SortKey; label: string }[] = [
-      { key: 'sortByYear', label: 'Year' },
-      { key: 'sortByRides', label: 'Number of Rides' },
-      { key: 'sortByClass', label: 'Class' }
+      { key: "sortByYear", label: "Year" },
+      { key: "sortByRides", label: "Number of Rides" },
+      { key: "sortByClass", label: "Class" },
     ];
 
     return sortItems.map(({ key, label }) => (
       <Box
         key={key}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '75%',
-          mb: 1
+          display: "flex",
+          alignItems: "center",
+          width: "75%",
+          mb: 1,
         }}
       >
         <FormControlLabel
           control={
             <Checkbox
               checked={filters[key]}
-              onChange={(e) => onFilterChange({
-                ...e,
-                target: {
-                  ...e.target,
-                  name: key,
-                  checked: e.target.checked,
-                  sortDirection: sortDirections[key]
-                }
-              })}
+              onChange={(e) =>
+                onFilterChange({
+                  ...e,
+                  target: {
+                    ...e.target,
+                    name: key,
+                    checked: e.target.checked,
+                    sortDirection: sortDirections[key],
+                  },
+                })
+              }
               name={key}
             />
           }
@@ -82,12 +110,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ showFilter, onClose, filters,
             size="small"
             sx={{
               ml: 1,
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)'
-              }
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.04)",
+              },
             }}
           >
-            {sortDirections[key] === 'asc' ? (
+            {sortDirections[key] === "asc" ? (
               <ChevronUp size={20} />
             ) : (
               <ChevronDown size={20} />
@@ -124,7 +152,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ showFilter, onClose, filters,
           sx={{
             position: "absolute",
             top: 8,
-            width:30,
+            width: 30,
             right: 8,
           }}
         >
@@ -135,9 +163,33 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ showFilter, onClose, filters,
           Sort by
         </Typography>
 
-        <FormGroup sx={{ width: '100%' }}>
-          {renderSortItems()}
-        </FormGroup>
+        <FormGroup sx={{ width: "100%" }}>{renderSortItems()}</FormGroup>
+        <FormControl fullWidth>
+          <InputLabel>Class</InputLabel>
+          <Select
+            value={classFilter}
+            onChange={(e) => {
+              setClassFilter(e.target.value);
+
+              const syntheticEvent = {
+                target: {
+                  name: "classFilter",
+                  value: e.target.value,
+                },
+              } as React.ChangeEvent<HTMLInputElement>;
+
+              onFilterChange(syntheticEvent);
+            }}
+            label="Class"
+          >
+            <MenuItem value="">All Classes</MenuItem>
+            {classes.map((className) => (
+              <MenuItem key={className} value={className}>
+                {className}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
     </Slide>
   );

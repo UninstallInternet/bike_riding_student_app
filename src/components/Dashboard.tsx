@@ -73,7 +73,9 @@ export default function TeacherDashboard() {
     sortByYear: false,
     sortByRides: false,
     sortByClass: false,
+    classFilter: "", // Add this field to store the selected class
   });
+
   const [sortDirections, setSortDirections] = useState({
     sortByYear: "asc",
     sortByRides: "asc",
@@ -109,6 +111,12 @@ export default function TeacherDashboard() {
 
     if (activeFilter !== null) {
       result = result.filter((student) => student.is_active === activeFilter);
+    }
+
+    if (filters.classFilter) {
+      result = result.filter(
+        (student) => student.class === filters.classFilter
+      );
     }
 
     if (searchQuery) {
@@ -234,31 +242,50 @@ export default function TeacherDashboard() {
         name: string;
         checked: boolean;
         sortDirection?: "asc" | "desc";
+        value?: string;
       };
     }
   ) => {
-    const { name, checked, sortDirection } = event.target;
+    const { name, checked, sortDirection, value } = event.target;
 
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [name]: checked,
-    }));
-
-    if (sortDirection) {
-      setSortDirections((prev) => ({
-        ...prev,
-        [name]: sortDirection,
+    if (name === "classFilter") {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        [name]: value || "",
       }));
+    } else {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        [name]: checked,
+      }));
+
+      if (sortDirection) {
+        setSortDirections((prev) => ({
+          ...prev,
+          [name]: sortDirection,
+        }));
+      }
     }
   };
   const clearError = () => setError(undefined);
+
+  const handleSelectAll = () => {
+    if (selectedStudents.length === filteredStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      const allStudentIds = filteredStudents.map((student) =>
+        student.id.toString()
+      );
+      setSelectedStudents(allStudentIds);
+    }
+  };
   return (
     <Box
       sx={{
         pb: { xs: 3, sm: 7 },
         bgcolor: "#FFFFFF",
         minHeight: "100vh",
-        width: "100%",
+        width: "95%",
         margin: "auto",
       }}
     >
@@ -268,8 +295,6 @@ export default function TeacherDashboard() {
         sx={{
           bgcolor: "background.paper",
           color: "text.primary",
-          borderBottom: "1px solid",
-          borderColor: "divider",
           p: 0.5,
         }}
       >
@@ -300,9 +325,9 @@ export default function TeacherDashboard() {
                 bgcolor: "primary",
                 color: "white",
                 borderRadius: "15px",
-                p: 1,
+                p: 0.2,
 
-                marginLeft: 3,
+                marginLeft: 1,
                 "&:hover": {
                   bgcolor: "error.dark",
                 },
@@ -310,7 +335,7 @@ export default function TeacherDashboard() {
                 transition: "all 0.3s ease",
               }}
             >
-              Log Out
+              Logout
             </Button>
           )}
         </Toolbar>
@@ -334,7 +359,7 @@ export default function TeacherDashboard() {
             display: "flex",
             alignItems: "center",
             gap: 1,
-            mb: 2,
+            mb: 1,
           }}
         >
           <Typography
@@ -355,7 +380,10 @@ export default function TeacherDashboard() {
               fontSize: "0.875rem",
             }}
           >
-            <Typography color="white" sx={{ fontSize: "14px" }}>
+            <Typography
+              color="white"
+              sx={{ fontSize: isSmallScreen ? "12px" : "14px" }}
+            >
               {filteredStudents.length} users
             </Typography>
           </Box>
@@ -383,7 +411,9 @@ export default function TeacherDashboard() {
               color="primary"
             />
           )}
+
           <Box sx={{ flexGrow: 1 }} />
+
           <IconButton
             size="small"
             onClick={handleSearchClick}
@@ -396,7 +426,7 @@ export default function TeacherDashboard() {
         </Box>
 
         <Collapse in={showSearch} timeout="auto">
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2}}>
             <TextField
               fullWidth
               variant="outlined"
@@ -414,6 +444,35 @@ export default function TeacherDashboard() {
             />
           </Box>
         </Collapse>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            borderBottom:"1px solid",
+            pb:0.5, 
+            borderColor: "divider",
+          }}
+        >
+          {" "}
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleSelectAll}
+            sx={{
+              textTransform: "none",
+              borderRadius: "16px",
+              width:90,
+              fontSize:14,
+              maxHeight: 12,
+              px: 1,
+            }}
+          >
+            {selectedStudents.length === filteredStudents.length
+              ? "Deselect"
+              : "Select All"}
+          </Button>
+        </Box>
         {loading ? (
           <Box
             sx={{

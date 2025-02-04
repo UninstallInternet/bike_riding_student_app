@@ -26,19 +26,32 @@ export const handleLogout = async (navigate: (path: string) => void) => {
 export const fetchUsers = async () => {
   const { data, error } = await supabase.from("students").select(
     `*,
-      rides (id)`
+      rides (id, distance)`
   );
 
   if (error) {
     console.error(error);
     return [];
   } else {
-    // Calculate ride_count for each student
-    const studentsWithRides = data.map((student) => ({
-      ...student,
-      ride_count: student.rides.length, 
-    }));
-    return studentsWithRides;
+    
+    const studentsWithRidesAndDistance = data.map((student) => {
+      const ride_count = student.rides.length;
+      const totalDistance = student.rides.reduce(
+        (sum: number, ride: Rides) => sum + (ride.distance ?? 0),
+        0
+      );
+      return {
+        ...student,
+        ride_count, 
+        totalDistance, 
+      };
+    });
+
+    const sortedStudents = studentsWithRidesAndDistance.sort(
+      (a, b) => b.totalDistance - a.totalDistance
+    );
+
+    return sortedStudents;
   }
 };
 export const addStudent = async (student: Student) => {
