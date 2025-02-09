@@ -37,7 +37,7 @@ export const Leaderboard = () => {
   }, []); 
 
   return (
-    <Box sx={{ mb: 4, }}>
+    <Box sx={{ mb: 4, p:3}}>
       <StudentToolbar title="Leaderboard" />
 
       {loading ? (
@@ -119,8 +119,8 @@ export const Leaderboard = () => {
                   color="#35D187"
                   style={{ verticalAlign: "middle" }}
                 />{" "}
-                {user.totalDistance} km
-              </Typography>
+    {parseFloat(user.totalDistance.toFixed(2))} km
+    </Typography>
                 </Box>
               );
             })}
