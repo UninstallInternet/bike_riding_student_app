@@ -41,11 +41,11 @@ export const CalendarComponent: React.FC<CalendarComponentProps> = ({
       px: 1.2,
       borderRadius: 2,
       mb: 2,
-      pb:4,
+      pb:6  ,
       mt: 2,
       bgcolor: "white",
       width: { xs: "93%", sm: "79%" },
-      height: { xs: 260, sm: "90%" },
+      height: { xs: 288, sm: "90%" },
     }}
   >
     <Box
