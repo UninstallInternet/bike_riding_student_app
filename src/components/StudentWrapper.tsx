@@ -35,7 +35,7 @@ function StudentWrapper({ children }: { children: ReactNode }) {
   }, [session, role]);  
 
   if (loading || checkingRole) {
-    return <div>ola</div>;
+    return <div>Loading..</div>;
   }
 
   if (!session || role !== "student") {
