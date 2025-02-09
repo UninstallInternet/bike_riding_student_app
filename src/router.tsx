@@ -19,10 +19,12 @@ import { AllRides } from "./views/students/AllRides";
 import StudentWrapper from "./components/StudentWrapper";
 import { StudentEditSelf } from "./views/students/StudentEditSelf";
 import { TeacherEditSelf } from "./views/teacher/EditSelf";
+import NotFoundPage from "./views/NotFound";
 
 export const router = createBrowserRouter([
   { path: "/", element: <App /> },
   { path: "/login/teacher", element: <TeacherLoginPage /> },
+  {path:"*", element: <NotFoundPage/>},
   {
     path: "/student/dashboard",
     element: (

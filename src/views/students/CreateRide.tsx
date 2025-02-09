@@ -9,8 +9,8 @@ import { fetchStudentbyId, StudentWithRides } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
 import { theme } from "../../theme/theme";
 import { StudentToolbar } from "../../components/StudentToolbar";
-
-const schoolQr = "SchoolBrussels123";
+import { schoolQr } from "../../lib/staticConsts";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 export const CreateRide = () => {
   const { session } = UserAuth();
@@ -19,24 +19,33 @@ export const CreateRide = () => {
   const [succes, setSucess] = useState("");
   const bikeScanned = useRef("");
   const schoolScanned = useRef("");
+  const navigate = useNavigate(); // Initialize the navigate function
 
   useEffect(() => {
     if (session?.user.id) {
-      fetchStudentbyId(session.user.id).then((data) => setStudent(data as StudentWithRides[]));
+      fetchStudentbyId(session.user.id).then((data) =>
+        setStudent(data as StudentWithRides[])
+      );
     }
   }, [session]);
 
-  const handleError = (error : unknown) => {
+  const handleError = (error: unknown) => {
     console.error("Error scanning QR code:", error);
-    setError("There was a error mounting the camera, please make sure you allow camera access")
+    setError(
+      "Error mounting the camera. Please ensure camera access is allowed and not in use by another app."
+    );
   };
-  console.log(student)
+  console.log(student);
 
   const handleScan = async (data: IDetectedBarcode[]) => {
     const scannedString = data[0].rawValue;
 
     if (data) {
-      if (student && !bikeScanned.current && scannedString === student[0].bike_qr_code) {
+      if (
+        student &&
+        !bikeScanned.current &&
+        scannedString === student[0].bike_qr_code
+      ) {
         bikeScanned.current = scannedString; // Store the bike QR code in ref
         console.log("Bike QR code validated");
         setSucess("Bike QR code validated");
@@ -49,13 +58,12 @@ export const CreateRide = () => {
         !schoolScanned.current &&
         scannedString === schoolQr
       ) {
-        schoolScanned.current = scannedString; 
+        schoolScanned.current = scannedString;
         console.log("School QR code validated");
         setSucess("School QR code validated");
         setError("");
-        await createRideRecord(); // Wait for ride creation
+        await createRideRecord(); 
       }
-      // Handle invalid QR scans
       else {
         if (!bikeScanned.current) {
           console.error("Invalid Bike QR code");
@@ -81,18 +89,22 @@ export const CreateRide = () => {
         ride_date: new Date().toISOString(),
         bike_qr_scanned: bikeScanned.current,
         distance: student[0].distance_to_school,
-        distance_img: student[0].distance_img
+        distance_img: student[0].distance_img,
       };
 
       try {
-        const { error } = await supabase.from("rides").insert(rideData);
+        const { data, error } = await supabase
+          .from("rides")
+          .insert(rideData)
+          .select();
         if (error) {
           alert("error");
-        } 
-
-        console.log("Ride created successfully:", rideData);
-        setSucess("Ride created successfully")
-        alert("Ride created successfully!");
+          console.log(error);
+        } else if (data && data.length > 0) {
+          console.log("Ride created successfully:", rideData);
+          setSucess("Ride created successfully");
+          navigate(`/ride/${data[0].id}`);
+        }
       } catch (error) {
         console.error("Error creating ride:", error);
       }
@@ -117,7 +129,7 @@ export const CreateRide = () => {
           borderRadius: 10,
           opacity: 0.9,
           py: 4,
-          px: 2, 
+          px: 2,
         }}
       >
         <Typography
@@ -158,9 +170,9 @@ export const CreateRide = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 1,
-                width: { xs: "98%", sm: "60%" }, 
+                width: { xs: "98%", sm: "60%" },
                 border: "1px dotted green",
-                mx: "auto", 
+                mx: "auto",
                 py: 1,
               }}
             >
