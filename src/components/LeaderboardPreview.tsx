@@ -119,7 +119,7 @@ export const LeaderboardPreview = ({ leaderboard }: LeaderboardProps) => {
           borderRadius: "15px",
           p: 1,
           mt:4,
-          width:"70%",
+          width:"99%",
           fontWeight: 500,
           transition: "all 0.3s ease",
         }}

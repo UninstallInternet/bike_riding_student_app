@@ -97,7 +97,7 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", gap: "10px", mb: 2, flexWrap: "wrap", justifyContent: "center" }}>
+      <Box sx={{ display: "flex", gap: "25px", mb: 2, flexWrap: "wrap", justifyContent: "start" }}>
         {badges?.map((badge) => (
           <Box
             key={badge.id}

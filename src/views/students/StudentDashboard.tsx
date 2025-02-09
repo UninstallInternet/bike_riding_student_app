@@ -322,7 +322,7 @@ export default function StudentDashboard() {
       <Box sx={{ p: 3 }}>
         <LeaderboardPreview leaderboard={leaderboard} />
 
-        <Typography variant="h6" sx={{ mb: 2, mt: 6 }}>
+        <Typography variant="h6" sx={{ mb: 2, ml:1, mt: 6 , textAlign:"left"}}>
           Earned awards
         </Typography>
         <StudentBadges studentId={session?.user.id as string} />
@@ -372,9 +372,10 @@ export default function StudentDashboard() {
           m: "auto",
           bgcolor: "gray",
           borderRadius: 10,
-          justifyContent: "space-between",
-          p: 2,
-          width: "40%",
+          justifyContent: "space-around",
+          p: 1,
+          mt:2,
+          width: "70%",
         }}
         onClick={handleDrawerToggle}
       >

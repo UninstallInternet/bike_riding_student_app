@@ -5,40 +5,37 @@ import { supabase } from "../lib/supabase";
 
 function StudentWrapper({ children }: { children: ReactNode }) {
   const { session, loading } = UserAuth();
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(localStorage.getItem("role") || null);
   const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!session) {
-        localStorage.removeItem("role"); // Clear stored role on logout
-        setRole(null);
+    if (session && role === null) {
+      const fetchUserRole = async () => {
+        setCheckingRole(true);
+        const { data: student, error } = await supabase
+          .from("students")
+          .select("id")
+          .eq("id", session.user.id)
+          .single();
+
+        if (error || !student) {
+          setRole("teacher");
+          localStorage.setItem("role", "teacher");
+        } else {
+          setRole("student");
+          localStorage.setItem("role", "student"); 
+        }
         setCheckingRole(false);
-        return;
-      }
+      };
 
-      setCheckingRole(true);
-      const { data: student, error } = await supabase
-        .from("students")
-        .select("id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (error || !student) {
-        setRole("teacher");
-        localStorage.setItem("role", "teacher");
-      } else {
-        setRole("student");
-        localStorage.setItem("role", "student");
-      }
+      fetchUserRole();
+    } else {
       setCheckingRole(false);
-    };
-
-    fetchUserRole();
-  }, [session]); 
+    }
+  }, [session, role]);  
 
   if (loading || checkingRole) {
-    return <div>Loading...</div>;
+    return <div>ola</div>;
   }
 
   if (!session || role !== "student") {
