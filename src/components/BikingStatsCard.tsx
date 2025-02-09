@@ -40,13 +40,15 @@ const BikingStatsCard = ({ totalBikedAmount, rideCount }: BikingStatsCardProps) 
           <img src="/cup.png" alt="Cup" style={{ width: 42, height: 42 }} />
         </Box>
         <Box>
-          <Typography variant="body2" color={theme.palette.offBlue.main} align="left">
-            Total Biked Amount
-          </Typography>
-          <Typography  variant="h6" align="left" >
-          {parseFloat(totalBikedAmount.toFixed(2))}
-             km</Typography>
-        </Box>
+  <Typography variant="body2" color={theme.palette.offBlue.main} align="left">
+    Total Biked Amount
+  </Typography>
+  <Typography variant="h6" align="left">
+    {parseFloat(totalBikedAmount.toFixed(2))}
+    <span style={{ marginLeft: '4px' }}>km</span> 
+  </Typography>
+</Box>
+
       </Paper>
 
       <Paper
