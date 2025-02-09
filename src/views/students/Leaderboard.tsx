@@ -37,7 +37,7 @@ export const Leaderboard = () => {
   }, []); 
 
   return (
-    <Box sx={{ mb: 4, p:3}}>
+    <Box sx={{ mb: 4, px:3}}>
       <StudentToolbar title="Leaderboard" />
 
       {loading ? (
