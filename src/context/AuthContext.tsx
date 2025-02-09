@@ -48,7 +48,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       setUserInfo((prev) => ({ ...prev, session }));
     });
 
-    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserInfo({ session, profile: null });
     });

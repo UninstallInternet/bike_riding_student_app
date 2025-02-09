@@ -15,3 +15,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   }
 });
+
+
+export const supabaseTeacher = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storageKey:"s1"
+  }
+});
+

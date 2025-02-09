@@ -18,12 +18,11 @@ export const handleLogout = async (navigate: (path: string) => void) => {
   if (error) {
     console.error("Error logging out", error.message);
   } else {
-    console.log("Logged out successfully");
     navigate("/");
   }
 };
 
-export const fetchUsers = async () => {
+export const fetchStudents = async () => {
   const { data, error } = await supabase.from("students").select(
     `*,
       rides (id, distance)`
@@ -33,7 +32,6 @@ export const fetchUsers = async () => {
     console.error(error);
     return [];
   } else {
-    
     const studentsWithRidesAndDistance = data.map((student) => {
       const ride_count = student.rides.length;
       const totalDistance = student.rides.reduce(
@@ -42,8 +40,8 @@ export const fetchUsers = async () => {
       );
       return {
         ...student,
-        ride_count, 
-        totalDistance, 
+        ride_count,
+        totalDistance,
       };
     });
 
@@ -62,7 +60,7 @@ export const addStudent = async (student: Student) => {
 
   if (error) {
     console.error("Student Insert Error:", error);
-    return null;
+    return;
   }
 
   return data;
@@ -75,7 +73,7 @@ export const fetchTeacher = async () => {
   if (user) {
     const { data, error } = await supabase
       .from("teachers")
-      .select("name")
+      .select("name, id, profile_pic_url")
       .eq("id", user.id)
       .single();
 
@@ -86,6 +84,106 @@ export const fetchTeacher = async () => {
     }
   }
 };
+
+export const fetchStudentbyId = async (id: string) => {
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .eq("id", id);
+  if (error) {
+    console.error("Error fetching current student data:", error);
+  } else {
+    return data;
+  }
+};
+
+export const fetchStudentImage = async (id: string) => {
+  const { data, error } = await supabase
+    .from("students")
+    .select("profile_pic_url")
+    .eq("id", id);
+  if (error) {
+    console.error("Error fetching current student data:", error);
+  } else {
+    return data;
+  }
+};
+
+export const updateStudentPicture = async (id: string, file: File) => {
+  const fileExt = file.name.split(".").pop()
+  const fileName = `${id}-${Math.random()}.${fileExt}`
+
+  const {  error: uploadError } = await supabase.storage.from("avatars").upload(fileName, file)
+  
+  if (uploadError) {
+    console.error("Upload error:", uploadError)
+    throw uploadError
+  }
+  const { data } = supabase.storage.from("avatars").getPublicUrl(fileName)
+
+  if (!data || !data.publicUrl) {
+    console.error("Error retrieving public URL for file:", fileName)
+    throw new Error("Failed to retrieve the public URL.")
+  }
+
+  const publicUrl = data.publicUrl
+
+  const { data: studentData, error: updateError } = await supabase
+    .from("students")
+    .update({ profile_pic_url: publicUrl })
+    .eq("id", id)
+    .select()
+    .single()
+
+  if (updateError) {
+    console.error("Update error:", updateError)
+    throw updateError
+  }
+
+  return studentData
+}
+
+export const updateTeacherPicture = async (id: string, file: File) => {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${id}-${Math.random()}.${fileExt}`;
+
+  if(!id){
+    console.error("Mus be authenticated to update image")
+    return;
+  }
+  const { error: uploadError } = await supabase.storage.from("avatars").upload(fileName, file);
+  
+  if (uploadError) {
+    console.error("Upload error:", uploadError);
+    throw uploadError;
+  }
+
+
+  const { data } = await supabase.storage.from("avatars").getPublicUrl(fileName);
+  
+  if (!data || !data.publicUrl) {
+    console.error("Error retrieving public URL for file:", fileName);
+    throw new Error("Failed to retrieve the public URL.");
+  }
+
+  const publicUrl = data.publicUrl;
+
+  const { data: teachersData, error: updateError } = await supabase
+    .from("teachers")
+    .update({ profile_pic_url: publicUrl })
+    .eq("id", id)
+    .select()
+    .single()
+  if (updateError) {
+    console.error("Update error:", updateError);
+    throw updateError;
+  }
+
+  return teachersData;
+};
+
+
+
 
 export const deleteStudents = async (studentIds: string[]) => {
   const { error } = await supabase
@@ -217,11 +315,19 @@ export const exportStudentsCsv = async (
   }
 };
 
+export const fetchGeolocation = async(id: string) => {
+  const {data, error} = await supabase.from("students").select("id,lat,lng").eq("id", id)
+  if(error){
+    console.log("error trying to fetch lat and lng", error)
+  }
+  return data;
+}
+
 export const studentWithRidesQuery = async (id: string) => {
   const { data, error } = await supabase
     .from("students")
     .select(
-      `id, name, class, address, distance_to_school, bike_qr_code, starting_year,is_active, rides(id,ride_date)`
+      `id, name, class, address, distance_to_school, bike_qr_code, lat,lng,starting_year,is_active, distance_img, profile_pic_url, rides(*)`
     )
     .eq("id", id)
     .single();
@@ -245,11 +351,77 @@ export const fetchRides = async (studentId: string): Promise<Rides[]> => {
   return data as Rides[];
 };
 
-//types coming from supabase
-export type StudentWithRides = Awaited<
-  ReturnType<typeof studentWithRidesQuery>
->;
+export const fetchDetailRide = async (id: string) => {
+  const { data, error } = await supabase
+    .from("rides")
+    .select("*, students(lat, lng, distance_img)") 
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export async function fetchStudentBadges(studentId: string) {
+  const { data, error } = await supabase
+    .from("student_awards")
+    .select(
+      `
+      id,
+      awarded_at,
+      badge_id,
+      created_at,
+      student_id,
+      awards(id,name, description, icon_url)
+    `
+    )
+    .eq("student_id", studentId);
+
+  if (error) {
+    console.error("Error fetching badges:", error);
+  }
+
+  return data;
+}
+
+export type StudentWithRides = {
+  id: string;
+  name: string;
+  class: string;
+  address: string;
+  distance_to_school: number;
+  bike_qr_code: string;
+  lat: number;
+  lng: number;
+  starting_year: string;
+  is_active: boolean;
+  distance_img: string;
+  profile_pic_url: string | undefined;
+  rides: { id: string; ride_date: string }[];
+};
+
+
+
+export type DetailedRide = {
+  bike_qr_scanned: string;
+  distance: number | null;
+  id: string;
+  ride_date: string | null;
+  student_id: string | null;
+  students: {
+    lat: number;
+    lng: number;
+    distance_img: string;
+  };
+};
+
+export type StudentAwards = Awaited<ReturnType<typeof fetchStudentBadges>>;
 
 export type Student = Database["public"]["Tables"]["students"]["Row"];
 export type Teacher = Database["public"]["Tables"]["teachers"]["Row"];
 export type Rides = Database["public"]["Tables"]["rides"]["Row"];
+export type StudentAward =
+  Database["public"]["Tables"]["student_awards"]["Row"];
+export type Award = Database["public"]["Tables"]["awards"]["Row"];

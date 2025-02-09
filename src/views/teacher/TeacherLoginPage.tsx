@@ -1,5 +1,6 @@
 "use client";
 
+import { FormEvent, useState } from "react";
 import {
   Box,
   Button,
@@ -9,14 +10,14 @@ import {
   Typography,
 } from "@mui/material";
 import { LogInIcon } from "lucide-react";
-import { useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
-export default function StudentLoginPage() {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+import { supabase } from "../../lib/supabase";
+
+export default function TeacherLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -40,10 +41,11 @@ export default function StudentLoginPage() {
     }
 
     if (data) {
-      navigate("/student/dashboard");
+      navigate("/teacher/dashboard");
       return null;
     }
   };
+
   return (
     <Box
       sx={{
@@ -66,7 +68,7 @@ export default function StudentLoginPage() {
           }}
         >
           <Typography variant="h6" component="h1">
-            Student login
+            Teacher login
           </Typography>
 
           <Paper
@@ -101,7 +103,6 @@ export default function StudentLoginPage() {
               gap: 2,
             }}
           >
-            {" "}
             {message && (
               <Typography
                 color="error"
@@ -111,6 +112,7 @@ export default function StudentLoginPage() {
                 {message}
               </Typography>
             )}
+
             <TextField
               fullWidth
               placeholder="Email or Username"
@@ -123,6 +125,7 @@ export default function StudentLoginPage() {
                 },
               }}
             />
+
             <TextField
               fullWidth
               type="password"
@@ -136,6 +139,7 @@ export default function StudentLoginPage() {
                 },
               }}
             />
+
             <Button
               type="submit"
               variant="contained"
@@ -153,6 +157,7 @@ export default function StudentLoginPage() {
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
+
             <Link
               to="/login/reset"
               style={{
@@ -163,7 +168,7 @@ export default function StudentLoginPage() {
             >
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Forgot Password? Reset
-              </Typography>{" "}
+              </Typography>
             </Link>
           </Box>
         </Box>

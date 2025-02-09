@@ -6,7 +6,7 @@ import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import { ArrowLeft, Trash2, Bike, PencilLine } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import { useEffect, useState } from "react";
 import {
   deactivateStudents,
@@ -14,17 +14,18 @@ import {
   Rides,
   StudentWithRides,
   studentWithRidesQuery,
-} from "../lib/api";
+} from "../../lib/api";
 import {
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
 } from "@mui/material";
-import RideHistory from "./RidesHistory";
-import DeactivateButton from "./DeactivateButton";
-import DeactivateDialog from "./DeactivateDialog";
-import BikingStatsCard from "./BikingStatsCard";
+import DeactivateButton from "../../components/DeactivateButton";
+import DeactivateDialog from "../../components/DeactivateDialog";
+import BikingStatsCard from "../../components/BikingStatsCard";
+import TeacherRidesDisplay from "../../components/TeacherRidesDisplay";
 
 export default function StudentDetails() {
   const { id } = useParams();
@@ -45,7 +46,7 @@ export default function StudentDetails() {
     if (error) {
       alert("Server error deleting student");
     } else {
-      navigate("/dashboard");
+      navigate("/teacher/dashboard");
     }
   }
 
@@ -59,18 +60,29 @@ export default function StudentDetails() {
       });
     }
   }, [id]);
-
   useEffect(() => {
     fetchRides(id as string).then((data) => setSingleRides(data));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  console.log(singleRides);
 
   const totalBikedAmount = student?.distance_to_school
     ? student.distance_to_school * rideCount
     : 0;
-
+  if (!student) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
   return (
     <Box sx={{ bgcolor: "#FFFFFF", minHeight: "100vh" }}>
       <Box
@@ -83,7 +95,7 @@ export default function StudentDetails() {
           borderColor: "divider",
         }}
       >
-        <Link to={"/dashboard"}>
+        <Link to={"/teacher/dashboard"}>
           <IconButton edge="start" sx={{ mr: 2 }}>
             <ArrowLeft />
           </IconButton>
@@ -119,7 +131,7 @@ export default function StudentDetails() {
           }}
         >
           <Avatar
-            src="https://static.vecteezy.com/system/resources/thumbnails/043/210/048/small/portrait-of-a-young-smiling-woman-for-lifestyle-and-apparel-advertising-free-photo.jpeg"
+            src={student.profile_pic_url || undefined}
             sx={{
               width: 120,
               height: 120,
@@ -215,11 +227,10 @@ export default function StudentDetails() {
             </Button>
           </Link>
         </Box>
-      <BikingStatsCard
-      rideCount={rideCount}
-      totalBikedAmount={totalBikedAmount}
-      />
-
+        <BikingStatsCard
+          rideCount={rideCount}
+          totalBikedAmount={totalBikedAmount}
+        />
 
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
@@ -256,7 +267,7 @@ export default function StudentDetails() {
           </Box>
         </Box>
         <Box sx={{ p: 3, bgcolor: "#F5F7FA", borderRadius: 2 }}>
-          <RideHistory singleRides={singleRides} />{" "}
+          <TeacherRidesDisplay student={student} singleRides={singleRides} />{" "}
         </Box>
         <Box
           sx={{
@@ -280,7 +291,7 @@ export default function StudentDetails() {
           paper: { sx: { borderRadius: "28px" } },
         }}
         open={isDialogOpen}
-        onClose={() => setIsDeactivateDialogOpen(false)} // Fix this line
+        onClose={() => setIsDeactivateDialogOpen(false)}
         sx={{ borderRadius: "28px" }}
       >
         <DialogContent

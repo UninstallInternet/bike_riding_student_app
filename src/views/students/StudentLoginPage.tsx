@@ -1,30 +1,32 @@
-"use client";
-
-import { FormEvent, useState } from "react";
-import {
-  Box,
-  Button,
-  Container,
-  Paper,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Container, Paper, TextField, Typography } from "@mui/material";
 import { LogInIcon } from "lucide-react";
+import { useState, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
-export default function TeacherLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function StudentLoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
+
+  const validateEmail = (email: string) => {
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(email);
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage("");
     setLoading(true);
+
+    if (!validateEmail(email)) {
+      setMessage("Please enter a valid email.");
+      setLoading(false);
+      return;
+    }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
@@ -34,14 +36,13 @@ export default function TeacherLogin() {
     if (error) {
       setMessage(error.message);
       setLoading(false);
-
       setEmail("");
       setPassword("");
       return;
     }
 
     if (data) {
-      navigate("/dashboard");
+      navigate("/student/dashboard");
       return null;
     }
   };
@@ -68,7 +69,7 @@ export default function TeacherLogin() {
           }}
         >
           <Typography variant="h6" component="h1">
-            Teacher login
+            Student login
           </Typography>
 
           <Paper
@@ -112,10 +113,9 @@ export default function TeacherLogin() {
                 {message}
               </Typography>
             )}
-
             <TextField
               fullWidth
-              placeholder="Email or Username"
+              placeholder="Email"
               variant="outlined"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -125,7 +125,6 @@ export default function TeacherLogin() {
                 },
               }}
             />
-
             <TextField
               fullWidth
               type="password"
@@ -139,7 +138,6 @@ export default function TeacherLogin() {
                 },
               }}
             />
-
             <Button
               type="submit"
               variant="contained"
@@ -157,7 +155,6 @@ export default function TeacherLogin() {
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
-
             <Link
               to="/login/reset"
               style={{
@@ -168,7 +165,7 @@ export default function TeacherLogin() {
             >
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Forgot Password? Reset
-              </Typography>
+              </Typography>{" "}
             </Link>
           </Box>
         </Box>

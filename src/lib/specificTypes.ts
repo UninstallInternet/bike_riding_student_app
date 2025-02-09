@@ -1,7 +1,7 @@
-export interface LeaderboardItem {
+export interface LeaderboardUser {
+    profile_pic_url: string | undefined;
     id: string;
     name: string;
-    avatar: string;
     totalDistance: number;
     ride_count: number;
   }

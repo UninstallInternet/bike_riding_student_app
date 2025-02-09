@@ -39,7 +39,6 @@ export default function SendResetLink() {
     if (error) {
       console.error("Error sending password reset email:", error.message);
     } else {
-      console.log("Password reset email sent");
       setIsDialogOpen(true);
     }
   };

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 interface DeactivateDialogProps {
   isDeactivateDialogOpen: boolean;
   setIsDeactivateDialogOpen: (value: boolean) => void;
-  deactivateStudents: (studentIds: string[]) => Promise<boolean>; // Match the actual return type
+  deactivateStudents: (studentIds: string[]) => Promise<boolean>;
   studentId?: string;
 }
 
@@ -21,7 +21,7 @@ function DeactivateDialog({
     if (studentId) {
       await deactivateStudents([studentId]);
       setIsDeactivateDialogOpen(false);
-      navigate("/dashboard");
+      navigate("/teacher/dashboard");
     }
   };
 

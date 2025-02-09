@@ -10,14 +10,16 @@ import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { AddressAutocomplete } from "./AdressAutoComplete";
-import { addStudent, Student } from "../lib/api";
-import { supabase } from "../lib/supabase";
+import { AddressAutocomplete } from "../../components/AdressAutoComplete";
+import { addStudent, Student } from "../../lib/api";
+import { supabaseTeacher } from "../../lib/supabase";
 import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
-import { classes, years } from "../lib/staticConsts";
+import { classes, SCHOOL_LOCATION, years } from "../../lib/staticConsts";
 
 export default function AddStudent() {
   const [isDistanceValid, setIsDistanceValid] = useState(false);
+  const [polyline, setPolyline] = useState("");
+
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<Partial<Student>>({
     name: "",
@@ -39,7 +41,6 @@ export default function AddStudent() {
       [name]: value,
     }));
   };
-
   const handleDistanceChange = (distance: number, isValid: boolean) => {
     setFormData((prev) => ({
       ...prev,
@@ -48,24 +49,72 @@ export default function AddStudent() {
     setIsDistanceValid(isValid);
   };
 
-  const handleAddressChange = (address: string | undefined) => {
+  const handleAddressChange = (
+    address: string | undefined,
+    lat: number | undefined,
+    lng: number | undefined
+  ) => {
     setFormData((prev) => ({
       ...prev,
       address: address ?? "",
+      lat: lat ?? null,
+      lng: lng ?? null,
     }));
+
+    const DrawBikingRoute = () => {
+      if (!lat || !lng) return; 
+      const directionsService = new window.google.maps.DirectionsService();
+      const request = {
+        origin: new window.google.maps.LatLng(lat, lng), 
+        destination: new window.google.maps.LatLng(
+          SCHOOL_LOCATION.lat,
+          SCHOOL_LOCATION.lng
+        ),
+        travelMode: window.google.maps.TravelMode.BICYCLING,
+      };
+
+      directionsService.route(request, (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK && result) {
+          const encodedPolyline = result.routes[0].overview_polyline;
+          setPolyline(encodedPolyline); // Set the polyline
+        } else {
+          console.error("Error fetching directions:", status);
+          setError("Failed to fetch biking route.");
+        }
+      });
+    };
+
+    DrawBikingRoute();
+  };
+
+  const generateStaticMapUrl = (polyline: string) => {
+    if (!polyline) return ""; 
+    const encodedPath = encodeURIComponent(polyline);
+
+    const staticMapUrl =
+      `https://maps.googleapis.com/maps/api/staticmap?size=600x202` +
+      `&markers=color:0x14AE5C%7Clabel:A%7C${formData.lat},${formData.lng}` +
+      `&markers=color:0x14AE5C%7Clabel:B%7C${SCHOOL_LOCATION.lat},${SCHOOL_LOCATION.lng}` +
+      `&path=color:0x14AE5C%7Cenc:${encodedPath}` +
+      `&style=feature:transit|visibility:off` +
+      `&style=feature:poi|visibility:off` +
+      `&language=en` +
+      `&sensor=false` +
+      `&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}`;
+    return staticMapUrl;
   };
 
   const handleSignUp = async (credentials: SignUpWithPasswordCredentials) => {
     if (!("email" in credentials)) return;
     const { email, password } = credentials;
-    const { error, data } = await supabase.auth.signUp({
+    const { error, data } = await supabaseTeacher.auth.signUp({
       email,
       password,
     });
     if (error) {
       throw new Error(error.message);
     }
-    console.log(data);
+
     return data.user?.id;
   };
 
@@ -114,11 +163,17 @@ export default function AddStudent() {
       if (!userId) {
         throw new Error("User creation failed. No user ID returned.");
       }
+      if (!polyline) {
+        throw new Error("No biking route polyline available.");
+      }
+
+      const staticMapUrl = generateStaticMapUrl(polyline);
 
       const studentData: Student = {
         ...formData,
         id: userId,
         bike_qr_code: bikeQrCode,
+        distance_img: staticMapUrl,
       } as Student;
 
       await addStudent(studentData);
@@ -126,7 +181,7 @@ export default function AddStudent() {
       navigate(`/student/${userId}`);
     } catch (error) {
       console.error("Error creating student:", error);
-    setError("Error creating student: " + (error as Error).message);
+      setError("Error creating student: " + (error as Error).message);
     }
   };
 
@@ -143,7 +198,7 @@ export default function AddStudent() {
         }}
       >
         <Toolbar>
-          <Link to={"/dashboard"}>
+          <Link to={"/teacher/dashboard"}>
             <IconButton edge="start" sx={{ mr: 2 }}>
               <ArrowLeft />
             </IconButton>

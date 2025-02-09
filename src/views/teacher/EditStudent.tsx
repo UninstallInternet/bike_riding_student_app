@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import {
   Container,
   Typography,
@@ -12,18 +12,22 @@ import {
   IconButton,
   Box,
 } from "@mui/material";
-import { AddressAutocomplete } from "./AdressAutoComplete";
-import { deactivateStudents, Student } from "../lib/api";
-import { classes, years } from "../lib/staticConsts";
+import { AddressAutocomplete } from "../../components/AdressAutoComplete";
+import { deactivateStudents, Student } from "../../lib/api";
+import { classes, SCHOOL_LOCATION, years } from "../../lib/staticConsts";
 import { ArrowLeft } from "lucide-react";
-import DeactivateButton from "./DeactivateButton";
-import DeactivateDialog from "./DeactivateDialog";
+import DeactivateButton from "../../components/DeactivateButton";
+import DeactivateDialog from "../../components/DeactivateDialog";
 
 export default function EditStudent() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student>();
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
+  const [polyline, setPolyline] = useState("");
+  const [distanceImg, setDistanceImg] = useState("");
+
+
   const [formData, setFormData] = useState({
     name: "",
     class: "",
@@ -31,9 +35,11 @@ export default function EditStudent() {
     starting_year: "",
     address: "",
     distance_to_school: 0,
+    lat: null as number | null,
+    lng: null as number | null,
+    distance_img: "" 
   });
 
-  // get student data based on ID
   useEffect(() => {
     async function fetchStudent() {
       const { data, error } = await supabase
@@ -53,29 +59,89 @@ export default function EditStudent() {
           starting_year: data.starting_year,
           address: data.address,
           distance_to_school: data.distance_to_school || 0,
+          lat: data.lat ?? null,
+          lng: data.lng ?? null,
+          distance_img: data.distance_img || "" 
         });
       }
     }
-    console.log(formData);
     fetchStudent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
     setFormData((prevData) => ({
       ...prevData,
       [name]: name === "is_active" ? value === "Active" : value,
     }));
   };
 
-  const handleAddressChange = (address: string | undefined) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      address: address || "",
+  const handleAddressChange = (
+    address: string | undefined,
+    lat: number | undefined,
+    lng: number | undefined
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      address: address ?? "",
+      lat: lat ?? null,
+      lng: lng ?? null,
     }));
   };
+
+  useEffect(() => {
+    if (!formData.lat || !formData.lng) return;
+
+    const DrawBikingRoute = () => {
+      if (!formData.lat || !formData.lng) return; 
+
+      const directionsService = new window.google.maps.DirectionsService();
+      const request = {
+        origin: new window.google.maps.LatLng(formData.lat, formData.lng),
+        destination: new window.google.maps.LatLng(
+          SCHOOL_LOCATION.lat,
+          SCHOOL_LOCATION.lng
+        ),
+        travelMode: window.google.maps.TravelMode.BICYCLING,
+      };
+
+      directionsService.route(request, (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK && result) {
+          const encodedPolyline = result.routes[0].overview_polyline;
+          setPolyline(encodedPolyline); // Set the polyline
+        } else {
+          console.error("Error fetching directions:", status);
+          alert("Failed to fetch biking route.");
+        }
+      });
+    };
+
+    DrawBikingRoute();
+  }, [formData.lat, formData.lng]);
+
+  useEffect(() => {
+    if (!polyline) return;
+
+    const generateStaticMapUrl = (polyline: string) => {
+      if (!formData.lat || !formData.lng) return "";
+      const encodedPath = encodeURIComponent(polyline);
+
+      const staticMapUrl =
+        `https://maps.googleapis.com/maps/api/staticmap?size=600x202` +
+        `&markers=color:0x14AE5C%7Clabel:A%7C${formData.lat},${formData.lng}` +
+        `&markers=color:0x14AE5C%7Clabel:B%7C${SCHOOL_LOCATION.lat},${SCHOOL_LOCATION.lng}` +
+        `&path=color:0x14AE5C%7Cenc:${encodedPath}` +
+        `&style=feature:transit|visibility:off` +
+        `&style=feature:poi|visibility:off` +
+        `&language=en` +
+        `&sensor=false` +
+        `&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}`;
+      return staticMapUrl;
+    };
+
+    const distanceImage = generateStaticMapUrl(polyline);
+    setDistanceImg(distanceImage);
+  }, [polyline, formData.lat, formData.lng]); // Trigger when polyline changes
 
   const handleDistanceChange = (distance: number) => {
     setFormData((prevData) => ({
@@ -87,15 +153,19 @@ export default function EditStudent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { data, error } = await supabase
+    const updatedFormData = {
+      ...formData,
+      distance_img: distanceImg 
+    };
+
+    const {  error } = await supabase
       .from("students")
-      .update(formData)
+      .update(updatedFormData)
       .eq("id", id);
 
     if (error) {
       console.error("Error updating student:", error);
     } else {
-      console.log("Student updated successfully:", data);
       navigate(`/student/${id}`);
     }
   };
@@ -229,6 +299,7 @@ export default function EditStudent() {
             <Typography variant="body2" sx={{ mt: 2 }}>
               Distance to School: {formData.distance_to_school} km
             </Typography>
+
 
             <Button
               type="submit"

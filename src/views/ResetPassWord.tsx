@@ -36,7 +36,6 @@ export default function ResetPassword() {
         console.error("Error updating password:", error.message);
         setErrorMessage(error.message);
       } else {
-        console.log("Password updated successfully.");
         setIsDialogOpen(true);
       }
     } catch (error) {
@@ -47,6 +46,9 @@ export default function ResetPassword() {
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setNewPassword(""); 
+    setNewPasswordConfirm(""); 
+    setErrorMessage(null);
   };
 
   return (

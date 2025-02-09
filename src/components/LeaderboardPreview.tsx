@@ -1,43 +1,27 @@
-import { Typography, Button, Avatar, Box, styled } from "@mui/material";
+import { Typography, Button, Avatar, Box } from "@mui/material";
 import { Bike } from "lucide-react";
 import { UserAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
+import { LeaderboardUser } from "../lib/specificTypes";
+import { theme } from "../theme/theme";
+import { LeaderboardItem } from "./LeaderBoardItem";
 
-interface LeaderboardUser {
-  id: string;
-  name: string;
-  avatar: string;
-  totalDistance: number;
-}
 
 interface LeaderboardProps {
   leaderboard: LeaderboardUser[];
 }
 
-const LeaderboardItem = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "selected", 
-})<{ selected?: boolean }>(({ theme, selected }) => ({
-  display: "flex",
-  alignItems: "center",
-  width: "95%",
-  justifyContent: "center",
-  gap: theme.spacing(2),
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(1),
-  ...(selected && {
-    border: `1px solid #35D187`,
-    backgroundColor: "#F8F9FB",
-  }),
-}));
 
-export const Leaderboard = ({ leaderboard }: LeaderboardProps) => {
-  const { session } = UserAuth(); // Get logged-in user session
+
+export const LeaderboardPreview = ({ leaderboard }: LeaderboardProps) => {
+  const { session } = UserAuth();
 
   return (
     <Box sx={{ mb: 4, mt: 4 }}>
       <Box
         sx={{
           display: "flex",
-          gap: 2,
+          gap: 5,
           mb: 3,
           alignItems: "end",
           justifyContent: "center",
@@ -53,20 +37,20 @@ export const Leaderboard = ({ leaderboard }: LeaderboardProps) => {
               sx={{
                 minWidth: 80,
                 textAlign: "center",
-                order: positionOrder, // Reorders N1 to the center
-                transform: index === 0 ? "translateY(-10px)" : "none", // Elevate N1 slightly
+                order: positionOrder, 
+                transform: index === 0 ? "translateY(-10px)" : "none", 
               }}
             >
               <Box sx={{ position: "relative", display: "inline-block" }}>
                 <Avatar
-                  src={user.avatar}
+                  src={user.profile_pic_url || undefined}
                   sx={{
                     width: index === 0 ? 80 : 64,
                     height: index === 0 ? 80 : 64,
                     mb: 1,
                     border: isCurrentUser
-                      ? "1.5px solid green"
-                      : "1px solid blue",
+                      ? `2.4px solid ${theme.palette.green.main}`
+                      : `2.4px solid ${theme.palette.blue.main}` ,
                   }}
                 />
                 <Typography
@@ -77,7 +61,7 @@ export const Leaderboard = ({ leaderboard }: LeaderboardProps) => {
                     width: 20,
                     height: 20,
                     borderRadius: "50%",
-                    backgroundColor: "#35D187",
+                    backgroundColor: isCurrentUser? theme.palette.green.main : theme.palette.blue.main,
                     color: "white",
                     display: "flex",
                     alignItems: "center",
@@ -89,11 +73,11 @@ export const Leaderboard = ({ leaderboard }: LeaderboardProps) => {
                 </Typography>
               </Box>
               <Typography variant="body2">
-                {isCurrentUser ? "YOU" : user.name}
+                {isCurrentUser ? "You" : user.name}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="black" fontWeight={500}>
                 <Bike
-                  size={12}
+                  size={18}
                   color="#35D187"
                   style={{ verticalAlign: "middle" }}
                 />{" "}
@@ -103,8 +87,6 @@ export const Leaderboard = ({ leaderboard }: LeaderboardProps) => {
           );
         })}
       </Box>
-
-      {/* Full Leaderboard List (Show only 5 users) */}
       <Box
         sx={{
           display: "flex",
@@ -120,32 +102,14 @@ export const Leaderboard = ({ leaderboard }: LeaderboardProps) => {
           return (
             <LeaderboardItem
               key={user.id}
-              selected={isCurrentUser}
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                backgroundColor: isCurrentUser ? "#F0FFF4" : "transparent", // Light highlight for "YOU"
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography sx={{ minWidth: 24, textAlign: "left" }}>
-                  {index + 1}
-                </Typography>
-                <Avatar src={user.avatar} sx={{ width: 32, height: 32 }} />
-                <Box>
-                  <Typography variant="body2">
-                    {isCurrentUser ? "YOU" : user.name}
-                  </Typography>
-                </Box>
-              </Box>
-              <Typography sx={{ textAlign: "right", minWidth: 50 }}>
-                {user.totalDistance} km
-              </Typography>
-            </LeaderboardItem>
+              user={user}
+              index={index}
+              isCurrentUser={isCurrentUser}
+            />
           );
         })}
       </Box>
+      <Link to={"/student/leaderboard"}>
 
       <Button
         variant="contained"
@@ -154,14 +118,15 @@ export const Leaderboard = ({ leaderboard }: LeaderboardProps) => {
           color: "white",
           borderRadius: "15px",
           p: 1,
-
-          marginLeft: 3,
+          mt:4,
+          width:"70%",
           fontWeight: 500,
           transition: "all 0.3s ease",
         }}
-      >
-        See More Results
+        >
+        View More Results
       </Button>
+        </Link>
     </Box>
   );
 };

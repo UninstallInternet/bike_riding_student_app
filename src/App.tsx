@@ -1,5 +1,5 @@
 import "./App.css";
-import RoleSelector from "./components/role-selector-ui";
+import RoleSelector from "./views/RoleSelector";
 
 function App() {
   return <RoleSelector />;

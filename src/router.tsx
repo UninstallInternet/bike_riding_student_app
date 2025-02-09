@@ -1,27 +1,48 @@
 // router.tsx
 import { createBrowserRouter } from "react-router-dom";
-import StudentLoginPage from "./components/StudentLoginPage";
-import TeacherLoginPage from "./components/TeacherLoginPage";
+import StudentLoginPage from "./views/students/StudentLoginPage";
+import TeacherLoginPage from "./views/teacher/TeacherLoginPage";
 import App from "./App";
-import SendResetLink from "./components/SendResetLink";
-import Dashboard from "./components/Dashboard";
-import AddUser from "./components/AddStudent";
-import ResetPassword from "./components/ResetPassWord";
+import SendResetLink from "./views/SendResetLink";
+import Dashboard from "./views/teacher/Dashboard";
+import AddUser from "./views/teacher/AddStudent";
+import ResetPassword from "./views/ResetPassWord";
 import TeacherRegister from "./components/TeacherRegister";
 import Wrapper from "./components/SessionWrapper";
-import StudentDetails from "./components/StudentDetail";
-import EditStudent from "./components/EditStudent";
-// import StudentDashboard from "./components/StudentDashboard";
+import StudentDetails from "./views/teacher/StudentDetail";
+import EditStudent from "./views/teacher/EditStudent";
+import StudentDashboard from "./views/students/StudentDashboard";
+import { Leaderboard } from "./views/students/Leaderboard";
+import RideDetails from "./views/students/RideDetails";
+import { CreateRide } from "./views/students/CreateRide";
+import { AllRides } from "./views/students/AllRides";
+import StudentWrapper from "./components/StudentWrapper";
+import { StudentEditSelf } from "./views/students/StudentEditSelf";
+import { TeacherEditSelf } from "./views/teacher/EditSelf";
 
 export const router = createBrowserRouter([
   { path: "/", element: <App /> },
   { path: "/login/teacher", element: <TeacherLoginPage /> },
-  // { path: "/student/dashboard", element: <StudentDashboard /> },
+  {
+    path: "/student/dashboard",
+    element: (
+      <StudentWrapper>
+        <StudentDashboard />
+      </StudentWrapper>
+    ),
+  },
+
+  { path: "/student/leaderboard", element: (<StudentWrapper> <Leaderboard /></StudentWrapper>) },
   { path: "/login/student", element: <StudentLoginPage /> },
   { path: "/login/reset", element: <SendResetLink /> },
   { path: "/login/passwordreset", element: <ResetPassword /> },
+  { path: "/ride/:id", element: <RideDetails /> },
+  { path: "/student/createride", element: <CreateRide /> },
+  { path: "/student/allrides", element:(<StudentWrapper><AllRides /></StudentWrapper> ) },
+  {path:"/student/edit", element:<StudentWrapper><StudentEditSelf/></StudentWrapper>},
+  {path:"/teacher/editself", element: <Wrapper><TeacherEditSelf/></Wrapper>}, 
   {
-    path: "/dashboard",
+    path: "/teacher/dashboard",
     element: (
       <Wrapper>
         <Dashboard />,
@@ -29,7 +50,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: "/adduser",
+    path: "/teacher/adduser",
     element: (
       <Wrapper>
         <AddUser />

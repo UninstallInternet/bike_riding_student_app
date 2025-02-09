@@ -30,12 +30,12 @@ import {
   deleteStudents,
   exportStudentsCsv,
   fetchTeacher,
-  fetchUsers,
+  fetchStudents,
   handleLogout,
   Student,
   Teacher,
-} from "../lib/api";
-import { UserAuth } from "../context/AuthContext";
+} from "../../lib/api";
+import { UserAuth } from "../../context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -47,9 +47,9 @@ import {
   TextField,
   useMediaQuery,
 } from "@mui/material";
-import FilterPanel from "./FilterPanel";
-import ManagePanel from "./ManagePanel";
-import ExportPanel from "./ExportPanel";
+import FilterPanel from "../../components/FilterPanel";
+import ManagePanel from "../../components/ManagePanel";
+import ExportPanel from "../../components/ExportPanel";
 
 export default function TeacherDashboard() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -73,7 +73,7 @@ export default function TeacherDashboard() {
     sortByYear: false,
     sortByRides: false,
     sortByClass: false,
-    classFilter: "", // Add this field to store the selected class
+    classFilter: "",
   });
 
   const [sortDirections, setSortDirections] = useState({
@@ -93,7 +93,7 @@ export default function TeacherDashboard() {
   const { session } = UserAuth();
 
   useEffect(() => {
-    fetchUsers()
+    fetchStudents()
       .then((data) => {
         studentsRef.current = data;
         setFilteredStudents(data);
@@ -207,7 +207,7 @@ export default function TeacherDashboard() {
       }
 
       if (result) {
-        fetchUsers().then((data) => setFilteredStudents(data));
+        fetchStudents().then((data) => setFilteredStudents(data));
       }
     } catch (error) {
       setError(
@@ -279,6 +279,7 @@ export default function TeacherDashboard() {
       setSelectedStudents(allStudentIds);
     }
   };
+
   return (
     <Box
       sx={{
@@ -300,7 +301,9 @@ export default function TeacherDashboard() {
       >
         <Toolbar>
           <Stack direction="row" alignItems="center" spacing={2}>
-            <Avatar sx={{ width: 32, height: 32 }} />
+            <Link to={"/teacher/editself"}>
+            <Avatar src={teacher?.profile_pic_url || undefined} sx={{ width: 32, height: 32 }} />
+            </Link>
             <Typography
               fontSize={isSmallScreen ? "12px" : "22px"}
               component="h1"
@@ -312,7 +315,7 @@ export default function TeacherDashboard() {
 
           <Box sx={{ flexGrow: 1 }} />
           <IconButton>
-            <Link to="/adduser">
+            <Link to="/teacher/adduser">
               <UserPlus />
             </Link>
           </IconButton>
