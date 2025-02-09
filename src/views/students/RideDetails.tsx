@@ -81,7 +81,7 @@ const RideDetails: React.FC = () => {
                     src={detailedRide[0].students.distance_img}
                     alt="Distance Image"
                     style={{
-                      width: "48%",
+                      width: "54%",
                       height: "55%",
                       borderRadius: 10,
                       objectFit: "cover",

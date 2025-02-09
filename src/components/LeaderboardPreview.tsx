@@ -81,8 +81,8 @@ export const LeaderboardPreview = ({ leaderboard }: LeaderboardProps) => {
                   color="#35D187"
                   style={{ verticalAlign: "middle" }}
                 />{" "}
-                {user.totalDistance} km
-              </Typography>
+    {parseFloat(user.totalDistance.toFixed(2))}
+    </Typography>
             </Box>
           );
         })}
