@@ -45,17 +45,20 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserInfo((prev) => ({ ...prev, session }));
+      if (session) {
+        setUserInfo((prev) => ({ ...prev, session }));
+      }
     });
-
+  
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserInfo({ session, profile: null });
     });
-
+  
     return () => {
-      authListener.subscription.unsubscribe();
+      authListener?.subscription?.unsubscribe();
     };
   }, []);
+  
 
   return (
     <AuthContext.Provider value={{ ...userInfo, loading, handleLogin }}>

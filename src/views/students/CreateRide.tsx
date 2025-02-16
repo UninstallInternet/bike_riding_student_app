@@ -1,25 +1,27 @@
 import { Box, Typography } from "@mui/material";
 import { Check } from "lucide-react";
-
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { UserAuth } from "../../context/AuthContext";
-
 import { useEffect, useRef, useState } from "react";
 import { fetchStudentbyId, StudentWithRides } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
 import { theme } from "../../theme/theme";
 import { StudentToolbar } from "../../components/StudentToolbar";
 import { schoolQr } from "../../lib/staticConsts";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
 export const CreateRide = () => {
   const { session } = UserAuth();
   const [student, setStudent] = useState<StudentWithRides[] | null>(null);
   const [error, setError] = useState("");
   const [succes, setSucess] = useState("");
+  const [forceRender, setForceRender] = useState(false);
+
+  const [timeLeft, setTimeLeft] = useState(60);
   const bikeScanned = useRef("");
   const schoolScanned = useRef("");
-  const navigate = useNavigate(); // Initialize the navigate function
+  const navigate = useNavigate();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (session?.user.id) {
@@ -29,31 +31,54 @@ export const CreateRide = () => {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (timeLeft === 0) {
+      resetFlow();
+    }
+  }, [timeLeft]);
+
+  const startTimer = () => {
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+  };
+
+  const resetFlow = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current); 
+    }
+    bikeScanned.current = "";
+    schoolScanned.current = "";
+    setTimeLeft(60);
+    setError("Time's up! Please scan the bike QR code again."); 
+    setSucess("");
+
+    setForceRender((prev) => !prev); 
+  };
+
   const handleError = (error: unknown) => {
     console.error("Error scanning QR code:", error);
     setError(
       "Error mounting the camera. Please ensure camera access is allowed and not in use by another app."
     );
   };
-  console.log(student);
 
   const handleScan = async (data: IDetectedBarcode[]) => {
     const scannedString = data[0].rawValue;
 
-    if (data) {
+    if (scannedString) {
       if (
         student &&
-        !bikeScanned.current &&
+        !bikeScanned.current && 
         scannedString === student[0].bike_qr_code
       ) {
-        bikeScanned.current = scannedString; // Store the bike QR code in ref
+        bikeScanned.current = scannedString;
         console.log("Bike QR code validated");
         setSucess("Bike QR code validated");
-
         setError("");
-      }
-      //  School QR code
-      else if (
+        setTimeLeft(60); 
+        startTimer(); 
+      } else if (
         bikeScanned.current &&
         !schoolScanned.current &&
         scannedString === schoolQr
@@ -62,9 +87,11 @@ export const CreateRide = () => {
         console.log("School QR code validated");
         setSucess("School QR code validated");
         setError("");
-        await createRideRecord(); 
-      }
-      else {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+        await createRideRecord();
+      } else {
         if (!bikeScanned.current) {
           console.error("Invalid Bike QR code");
           setError("Invalid QR Code, First scan bike code");
@@ -124,7 +151,7 @@ export const CreateRide = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          height: "85vh",
+          height: "90vh",
           bgcolor: "gray",
           borderRadius: 10,
           opacity: 0.9,
@@ -146,6 +173,19 @@ export const CreateRide = () => {
           <span style={{ fontWeight: 500 }}> fully visible within</span> the
           frame.
         </Typography>
+
+        {bikeScanned.current && !schoolScanned.current && (
+          <Typography
+            sx={{
+              color: "white",
+              mb: 2,
+              fontWeight: 500,
+            }}
+          >
+            Time left: {Math.floor(timeLeft / 60)}:
+            {("0" + (timeLeft % 60)).slice(-2)}
+          </Typography>
+        )}
 
         <Box sx={{ width: { xs: "90%", sm: "60%" } }}>
           {error && (
@@ -215,7 +255,11 @@ export const CreateRide = () => {
               },
             }}
           >
-            <Scanner onScan={handleScan} onError={handleError} />
+            <Scanner
+              key={Number(forceRender)}
+              onScan={handleScan}
+              onError={handleError}
+            />
           </Box>
         </Box>
       </Box>

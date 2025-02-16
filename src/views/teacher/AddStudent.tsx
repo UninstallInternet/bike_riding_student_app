@@ -15,10 +15,13 @@ import { addStudent, Student } from "../../lib/api";
 import { supabaseTeacher } from "../../lib/supabase";
 import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 import { classes, SCHOOL_LOCATION, years } from "../../lib/staticConsts";
+import { v4 as uuidv4 } from "uuid"; 
+import QRCode from "qrcode";
 
 export default function AddStudent() {
   const [isDistanceValid, setIsDistanceValid] = useState(false);
   const [polyline, setPolyline] = useState("");
+
 
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<Partial<Student>>({
@@ -41,6 +44,7 @@ export default function AddStudent() {
       [name]: value,
     }));
   };
+
   const handleDistanceChange = (distance: number, isValid: boolean) => {
     setFormData((prev) => ({
       ...prev,
@@ -48,6 +52,7 @@ export default function AddStudent() {
     }));
     setIsDistanceValid(isValid);
   };
+
 
   const handleAddressChange = (
     address: string | undefined,
@@ -62,10 +67,10 @@ export default function AddStudent() {
     }));
 
     const DrawBikingRoute = () => {
-      if (!lat || !lng) return; 
+      if (!lat || !lng) return;
       const directionsService = new window.google.maps.DirectionsService();
       const request = {
-        origin: new window.google.maps.LatLng(lat, lng), 
+        origin: new window.google.maps.LatLng(lat, lng),
         destination: new window.google.maps.LatLng(
           SCHOOL_LOCATION.lat,
           SCHOOL_LOCATION.lng
@@ -88,21 +93,22 @@ export default function AddStudent() {
   };
 
   const generateStaticMapUrl = (polyline: string) => {
-    if (!polyline) return ""; 
+    if (!polyline) return "";
     const encodedPath = encodeURIComponent(polyline);
 
     const staticMapUrl =
-      `https://maps.googleapis.com/maps/api/staticmap?size=600x202` +
-      `&markers=color:0x14AE5C%7Clabel:A%7C${formData.lat},${formData.lng}` +
-      `&markers=color:0x14AE5C%7Clabel:B%7C${SCHOOL_LOCATION.lat},${SCHOOL_LOCATION.lng}` +
-      `&path=color:0x14AE5C%7Cenc:${encodedPath}` +
-      `&style=feature:transit|visibility:off` +
-      `&style=feature:poi|visibility:off` +
-      `&language=en` +
-      `&sensor=false` +
-      `&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}`;
+      `https://maps.googleapis.com/maps/api/staticmap?size=600x202&` +
+      `markers=color:0x14AE5C%7Clabel:A%7C${formData.lat},${formData.lng}&` +
+      `markers=color:0x14AE5C%7Clabel:B%7C${SCHOOL_LOCATION.lat},${SCHOOL_LOCATION.lng}&` +
+      `path=color:0x14AE5C%7Cenc:${encodedPath}&` +
+      `style=feature:transit|visibility:off&` +
+      `style=feature:poi|visibility:off&` +
+      `language=en&sensor=false&key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}`;
+      
     return staticMapUrl;
   };
+
+  
 
   const handleSignUp = async (credentials: SignUpWithPasswordCredentials) => {
     if (!("email" in credentials)) return;
@@ -114,12 +120,11 @@ export default function AddStudent() {
     if (error) {
       throw new Error(error.message);
     }
-
     return data.user?.id;
   };
 
   const validateEmail = (email: string) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regex = /^[^\s@]+@[^\s@]+$/;
     return regex.test(email);
   };
 
@@ -130,24 +135,17 @@ export default function AddStudent() {
       setError("Please enter a valid email address.");
       return;
     }
-
     if (!formData.address) {
       setError("Address is required to create student");
       return;
     }
-
     if (!isDistanceValid) {
       setError("Invalid address or distance cannot be calculated.");
       return;
     }
 
-    const nameWithoutSpaces = formData.name?.replace(/\s+/g, "") || "";
-
-    const bikeQrCode = `${nameWithoutSpaces}${
-      Math.floor(Math.random() * 900) + 100
-    }${formData.address?.replace(/[, ].*/, "")}${
-      Math.floor(Math.random() * 900) + 100
-    }`;
+    const userId = uuidv4(); 
+    const bikeQrCode = userId;
 
     setFormData((prev) => ({
       ...prev,
@@ -155,35 +153,49 @@ export default function AddStudent() {
     }));
 
     try {
-      const userId = await handleSignUp({
+      const newUserId = await handleSignUp({
         email: formData.email!,
         password: formData.password!,
       });
 
-      if (!userId) {
+      if (!newUserId) {
         throw new Error("User creation failed. No user ID returned.");
       }
-      if (!polyline) {
-        throw new Error("No biking route polyline available.");
-      }
-
       const staticMapUrl = generateStaticMapUrl(polyline);
+
 
       const studentData: Student = {
         ...formData,
-        id: userId,
+        id: newUserId,
         bike_qr_code: bikeQrCode,
         distance_img: staticMapUrl,
       } as Student;
 
       await addStudent(studentData);
 
-      navigate(`/student/${userId}`);
+      await generateAndDownloadQR(bikeQrCode);
+
+      navigate(`/student/${newUserId}`);
     } catch (error) {
       console.error("Error creating student:", error);
       setError("Error creating student: " + (error as Error).message);
     }
   };
+
+  const generateAndDownloadQR = async (qrData: string) => {
+    try {
+      const qrUrl = await QRCode.toDataURL(qrData, { scale: 10 });
+      const link = document.createElement("a");
+      link.href = qrUrl;
+      link.download = `${formData.name?.replace(/\s+/g, '')}_bike_qr_code.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+    }
+  };
+
 
   return (
     <Box sx={{ pb: 10, minHeight: "100vh", bgcolor: "#FFFFFF" }}>

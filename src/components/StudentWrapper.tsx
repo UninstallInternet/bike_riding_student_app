@@ -9,30 +9,30 @@ function StudentWrapper({ children }: { children: ReactNode }) {
   const [checkingRole, setCheckingRole] = useState(true);
 
   useEffect(() => {
-    if (session && role === null) {
-      const fetchUserRole = async () => {
-        setCheckingRole(true);
-        const { data: student, error } = await supabase
-          .from("students")
-          .select("id")
-          .eq("id", session.user.id)
-          .single();
-
-        if (error || !student) {
-          setRole("teacher");
-          localStorage.setItem("role", "teacher");
-        } else {
-          setRole("student");
-          localStorage.setItem("role", "student"); 
-        }
-        setCheckingRole(false);
-      };
-
-      fetchUserRole();
-    } else {
+    if (!session) {
       setCheckingRole(false);
+      return;
     }
-  }, [session, role]);  
+  
+    const fetchUserRole = async () => {
+      setCheckingRole(true);
+      const { data: student, error } = await supabase
+        .from("students")
+        .select("id")
+        .eq("id", session.user.id)
+        .single();
+  
+      const newRole = error || !student ? "teacher" : "student";
+      setRole(newRole);
+      localStorage.setItem("role", newRole); 
+      setCheckingRole(false);
+    };
+  
+    fetchUserRole();
+  }, [session]);
+  
+  
+  
 
   if (loading || checkingRole) {
     return <div>Loading..</div>;

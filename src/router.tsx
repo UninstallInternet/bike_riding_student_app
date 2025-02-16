@@ -20,6 +20,8 @@ import StudentWrapper from "./components/StudentWrapper";
 import { StudentEditSelf } from "./views/students/StudentEditSelf";
 import { TeacherEditSelf } from "./views/teacher/EditSelf";
 import NotFoundPage from "./views/NotFound";
+import ClassOverview from "./views/teacher/ClassOverview";
+import { AllAwards } from "./views/students/AllAwards";
 
 export const router = createBrowserRouter([
   { path: "/", element: <App /> },
@@ -41,6 +43,7 @@ export const router = createBrowserRouter([
   { path: "/ride/:id", element: <RideDetails /> },
   { path: "/student/createride", element: <CreateRide /> },
   { path: "/student/allrides", element:(<StudentWrapper><AllRides /></StudentWrapper> ) },
+  { path: "/student/awards", element:(<StudentWrapper><AllAwards /></StudentWrapper> ) },
   {path:"/student/edit", element:<StudentWrapper><StudentEditSelf/></StudentWrapper>},
   {path:"/teacher/editself", element: <Wrapper><TeacherEditSelf/></Wrapper>}, 
   {
@@ -61,6 +64,7 @@ export const router = createBrowserRouter([
   },
   { path: "/register", element: <TeacherRegister /> },
   { path: "/student/:id", element: <StudentDetails /> },
+  {path:"/teacher/overview", element:<ClassOverview/>},
   {
     path: "/edit/:id",
     element: (

@@ -1,68 +1,40 @@
-import { useEffect, useState } from "react";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { StudentToolbar } from "../../components/StudentToolbar";
 import {
   Badge,
   fetchAllBadges,
   fetchStudentBadges,
   StudentAward,
-} from "../lib/api";
-import {
-  Typography,
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
+} from "../../lib/api";
+import { UserAuth } from "../../context/AuthContext";
+import { useState, useEffect } from "react";
 
-const StudentBadges = ({ studentId }: { studentId: string }) => {
+export const AllAwards = () => {
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
   const [studentBadges, setStudentBadges] = useState<StudentAward[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [open, setOpen] = useState<boolean>(false);
-
-
+  const { session } = UserAuth();
   useEffect(() => {
     const fetchBadges = async () => {
       try {
         const [allBadgesDataRaw, studentBadgesDataRaw] = await Promise.all([
           fetchAllBadges(),
-          fetchStudentBadges(studentId),
+          fetchStudentBadges(session?.user.id as string),
         ]);
-  
-        const allBadgesData = allBadgesDataRaw || []; 
-        const studentBadgesData = studentBadgesDataRaw || []; 
-  
+
+        const allBadgesData = allBadgesDataRaw || [];
+        const studentBadgesData = studentBadgesDataRaw || [];
+
         setAllBadges(allBadgesData as Badge[]);
         setStudentBadges(studentBadgesData as StudentAward[]);
-  
-        const hasShownFirstBadgeModal = sessionStorage.getItem(`hasShownFirstBadgeModal-${studentId}`);
-  
-        if (studentBadgesData.length > 0 && !hasShownFirstBadgeModal) {
-          const firstEarnedBadge = allBadgesData.find((badge) =>
-            studentBadgesData.some((b) => b.badge_id === badge.id && b.awarded_at)
-          );
-  
-          if (firstEarnedBadge) {
-            setSelectedBadge(firstEarnedBadge);
-            setOpen(true);
-            sessionStorage.setItem(`hasShownFirstBadgeModal-${studentId}`, "true");
-          }
-        }
-      } catch (err) {
-        setError("Error fetching badges.");
-        console.error(err);
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching badges:", error);
       }
     };
-  
+
     fetchBadges();
-  }, [studentId]);
-  
+  }, [session?.user.id]);
   
   const handleClickOpen = (badge: Badge) => {
     setSelectedBadge(badge);
@@ -73,30 +45,9 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
     setOpen(false);
     setSelectedBadge(null);
   };
-
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100%"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Typography variant="h6" color="error">
-        {error}
-      </Typography>
-    );
-  }
-
   return (
-    <Box>
+    <Box sx={{ mb: 4, mt: 1 }}>
+      <StudentToolbar title="All Awards" />
       <Box
         sx={{
           display: "flex",
@@ -119,7 +70,7 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
                 mx: 1,
                 cursor: "pointer",
                 position: "relative",
-                opacity: isObtained ? 1 : 0.5, 
+                opacity: isObtained ? 1 : 0.5,
                 filter: isObtained ? "none" : "grayscale(100%)",
               }}
               onClick={() => handleClickOpen(badge)}
@@ -132,9 +83,8 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
             </Box>
           );
         })}
-      </Box>
 
-      {selectedBadge && (
+{selectedBadge && (
         <Dialog
           slotProps={{
             paper: { sx: { borderRadius: "28px" } },
@@ -196,8 +146,7 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
           </DialogActions>
         </Dialog>
       )}
+      </Box>
     </Box>
   );
 };
-
-export default StudentBadges;

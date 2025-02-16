@@ -7,10 +7,10 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { fetchTeacher, Teacher, updateTeacherPicture } from "../../lib/api";
+import { fetchTeacher, handleLogout, Teacher, updateTeacherPicture } from "../../lib/api";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Camera,} from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/AuthContext";
 import { theme } from "../../theme/theme";
 
@@ -19,7 +19,8 @@ export const TeacherEditSelf = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
     const [sucess, setSucess] = useState("")
-  
+    const navigate = useNavigate();
+
   const {session} = UserAuth()
   useEffect(() => {
     setLoading(true);
@@ -61,13 +62,7 @@ export const TeacherEditSelf = () => {
     );
   }
 
-  if (!teacher) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>No student data available.</Typography>
-      </Box>
-    );
-  }
+
 
   return (
     <Box>
@@ -86,7 +81,27 @@ export const TeacherEditSelf = () => {
           </Stack>
 
           <Box sx={{ flexGrow: 1 }} />
+          {session && (
+            <Button
+              variant="contained"
+              onClick={() => handleLogout(navigate)}
+              sx={{
+                bgcolor: "primary",
+                color: "white",
+                borderRadius: "15px",
+                p: 0.2,
 
+                marginLeft: 1,
+                "&:hover": {
+                  bgcolor: "error.dark",
+                },
+                fontWeight: 500,
+                transition: "all 0.3s ease",
+              }}
+            >
+              Logout
+            </Button>
+          )}
 
         </Toolbar>
     <Box

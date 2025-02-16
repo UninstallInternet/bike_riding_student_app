@@ -15,12 +15,59 @@ import { supabase } from "./supabase";
 
 export const handleLogout = async (navigate: (path: string) => void) => {
   const { error } = await supabase.auth.signOut();
-  if (error) {
+
+  if (error && error.status !== 403) {
     console.error("Error logging out", error.message);
-  } else {
-    navigate("/");
+    return;
   }
+
+  localStorage.removeItem("role"); 
+  supabase.auth.setSession({ access_token: "", refresh_token: "" });
+
+  navigate("/");
 };
+
+export const fetchStudentsOverview = async (className?: string, month?: number) => {
+  let query = supabase.from("students").select("*");
+
+  if (className) {
+    query = query.eq("class", className);
+  }
+
+  const { data: students, error: studentsError } = await query;
+
+  if (studentsError) {
+    console.error(studentsError);
+    return [];
+  }
+
+  let ridesQuery = supabase.from("rides").select("*");
+
+  if (month !== undefined) {
+    const startDate = new Date(new Date().getFullYear(), month, 1).toISOString();
+    const endDate = new Date(new Date().getFullYear(), month + 1, 0).toISOString();
+    ridesQuery = ridesQuery.gte("ride_date", startDate).lte("ride_date", endDate);
+  }
+
+  const { data: rides, error: ridesError } = await ridesQuery;
+
+  if (ridesError) {
+    console.error(ridesError);
+    return [];
+  }
+
+  const studentsWithRides = students.map((student) => {
+    const studentRides = rides.filter((ride) => ride.student_id === student.id);
+    return {
+      ...student,
+      rides: studentRides,
+      totalDistance: studentRides.reduce((sum, ride) => sum + ride.distance, 0),
+    };
+  });
+
+  return studentsWithRides;
+};
+
 
 export const fetchStudents = async () => {
   const { data, error } = await supabase.from("students").select(
@@ -386,6 +433,15 @@ export async function fetchStudentBadges(studentId: string) {
   return data;
 }
 
+export async function fetchAllBadges () {
+  const {data, error} = await supabase.from("awards").select("*")
+  if(error){
+    console.error(error)
+  }
+  return data;
+}
+
+
 export type StudentWithRides = {
   id: string;
   name: string;
@@ -421,6 +477,7 @@ export type StudentAwards = Awaited<ReturnType<typeof fetchStudentBadges>>;
 
 export type Student = Database["public"]["Tables"]["students"]["Row"];
 export type Teacher = Database["public"]["Tables"]["teachers"]["Row"];
+export type Badge = Database["public"]["Tables"]["awards"]["Row"];
 export type Rides = Database["public"]["Tables"]["rides"]["Row"];
 export type StudentAward =
   Database["public"]["Tables"]["student_awards"]["Row"];

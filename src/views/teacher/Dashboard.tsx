@@ -23,19 +23,18 @@ import {
   UserMinus,
   X,
   User,
+  Bike,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   deactivateStudents,
   deleteStudents,
   exportStudentsCsv,
   fetchTeacher,
   fetchStudents,
-  handleLogout,
   Student,
   Teacher,
 } from "../../lib/api";
-import { UserAuth } from "../../context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -67,7 +66,7 @@ export default function TeacherDashboard() {
   const [error, setError] = useState<string | undefined>();
 
   const studentsRef = useRef<Student[]>([]);
-  const isSmallScreen = useMediaQuery("(max-width:400px)");
+  const isSmallScreen = useMediaQuery("(max-width:440px)");
 
   const [filters, setFilters] = useState({
     sortByYear: false,
@@ -88,9 +87,7 @@ export default function TeacherDashboard() {
   });
 
   const [teacher, setTeacher] = useState<Teacher | null>(null);
-  const navigate = useNavigate();
 
-  const { session } = UserAuth();
 
   useEffect(() => {
     fetchStudents()
@@ -302,45 +299,31 @@ export default function TeacherDashboard() {
         <Toolbar>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Link to={"/teacher/editself"}>
-            <Avatar src={teacher?.profile_pic_url || undefined} sx={{ width: 32, height: 32 }} />
+              <Avatar
+                src={teacher?.profile_pic_url || undefined}
+                sx={{ width: 32, height: 32 }}
+              />
             </Link>
             <Typography
-              fontSize={isSmallScreen ? "12px" : "22px"}
+              fontSize={isSmallScreen ? "14px" : "22px"}
               component="h1"
               fontWeight={"500"}
             >
-              Teacher Dashboard
+        Teacher Dashboard
             </Typography>
           </Stack>
 
           <Box sx={{ flexGrow: 1 }} />
+          <Link to={"/teacher/overview"}>
+          <Button sx={{mr:1, border: "1px solid #81c784", p:0.5}}>Overview</Button>
+          </Link>
           <IconButton>
             <Link to="/teacher/adduser">
               <UserPlus />
             </Link>
           </IconButton>
 
-          {session && (
-            <Button
-              variant="contained"
-              onClick={() => handleLogout(navigate)}
-              sx={{
-                bgcolor: "primary",
-                color: "white",
-                borderRadius: "15px",
-                p: 0.2,
 
-                marginLeft: 1,
-                "&:hover": {
-                  bgcolor: "error.dark",
-                },
-                fontWeight: 500,
-                transition: "all 0.3s ease",
-              }}
-            >
-              Logout
-            </Button>
-          )}
         </Toolbar>
       </AppBar>
       <Container>
@@ -429,7 +412,7 @@ export default function TeacherDashboard() {
         </Box>
 
         <Collapse in={showSearch} timeout="auto">
-          <Box sx={{ mb: 2}}>
+          <Box sx={{ mb: 2 }}>
             <TextField
               fullWidth
               variant="outlined"
@@ -452,8 +435,8 @@ export default function TeacherDashboard() {
             display: "flex",
             alignItems: "center",
             gap: 1,
-            borderBottom:"1px solid",
-            pb:0.5, 
+            borderBottom: "1px solid",
+            pb: 0.5,
             borderColor: "divider",
           }}
         >
@@ -465,8 +448,8 @@ export default function TeacherDashboard() {
             sx={{
               textTransform: "none",
               borderRadius: "16px",
-              width:90,
-              fontSize:14,
+              width: 90,
+              fontSize: 14,
               maxHeight: 12,
               px: 1,
             }}
@@ -565,6 +548,11 @@ export default function TeacherDashboard() {
                     />
                   </Box>
                 </ListItemButton>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Bike size={14} />
+                  <Typography>{student.ride_count}</Typography>
+                </Box>
               </ListItem>
             ))}
           </List>

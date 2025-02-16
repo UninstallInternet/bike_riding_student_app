@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import { Bike, QrCode, ChevronUp } from "lucide-react";
+import { QrCode, ChevronUp } from "lucide-react";
 import { UserAuth } from "../../context/AuthContext";
 import {
   fetchStudents,
@@ -17,7 +16,6 @@ import BikingStatsCard from "../../components/BikingStatsCard";
 import { LeaderboardPreview } from "../../components/LeaderboardPreview";
 import { LeaderboardUser } from "../../lib/specificTypes";
 import RideHistory from "../../components/RideHistory";
-import { theme } from "../../theme/theme";
 import StudentBadges from "../../components/StudentBadges";
 import { CircularProgress, useMediaQuery } from "@mui/material";
 import PrivacyDialog from "../../components/PrivacyDialog";
@@ -40,18 +38,22 @@ export default function StudentDashboard() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width:435px)");
-
-  //Privacy shown on first log
   useEffect(() => {
-    const hasSeenPrivacyDialog = localStorage.getItem("hasSeenPrivacyDialog");
+    if (student?.id) {
+      const hasSeenPrivacyDialog = sessionStorage.getItem(
+        `hasSeenPrivacyDialog-${student.id}`
+      );
 
-    if (!hasSeenPrivacyDialog) {
-      setShowPrivacyDialog(true);
+      if (!hasSeenPrivacyDialog) {
+        setShowPrivacyDialog(true);
+      }
     }
-  }, []);
+  }, [student]);
 
   const handlePrivacyDialogClose = () => {
-    localStorage.setItem("hasSeenPrivacyDialog", "true");
+    if (student?.id) {
+      sessionStorage.setItem(`hasSeenPrivacyDialog-${student.id}`, "true");
+    }
     setShowPrivacyDialog(false);
   };
 
@@ -75,7 +77,7 @@ export default function StudentDashboard() {
             );
             setSingleRides([sortedRides[0]]);
           } else {
-            setSingleRides([]); 
+            setSingleRides([]);
           }
         } else {
           setStudent(null);
@@ -85,7 +87,7 @@ export default function StudentDashboard() {
       } catch (error) {
         console.error("Error fetching student data:", error);
         setRideCount(0);
-        setSingleRides([]); 
+        setSingleRides([]);
       }
     };
 
@@ -104,7 +106,7 @@ export default function StudentDashboard() {
 
       const rideDays = filteredRides.map((ride) => ({
         day: new Date(ride.ride_date).getDate(),
-        id: ride.id, 
+        id: ride.id,
       }));
 
       setRideDays(rideDays);
@@ -114,11 +116,11 @@ export default function StudentDashboard() {
   const handleMonthChange = (direction: number) => {
     const newDate = new Date(currentYear, currentMonth + direction);
 
-    setCurrentDate(newDate); 
+    setCurrentDate(newDate);
     setCurrentMonth(newDate.getMonth());
     setCurrentYear(newDate.getFullYear());
 
-    fetchRideDays(newDate.getMonth(), newDate.getFullYear()); 
+    fetchRideDays(newDate.getMonth(), newDate.getFullYear());
   };
 
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
@@ -182,7 +184,7 @@ export default function StudentDashboard() {
           }}
         >
           <Link to={"/student/edit"}>
-         <UserAvatar />
+            <UserAvatar />
           </Link>
 
           <Typography variant="h6" sx={{ flexGrow: 1, textAlign: "center" }}>
@@ -212,9 +214,9 @@ export default function StudentDashboard() {
             width: "90%",
             display: "flex",
             justifyContent: "center",
-            alignItems: "center", 
+            alignItems: "center",
             flexDirection: "column",
-            textAlign: "center", 
+            textAlign: "center",
           }}
         >
           <Typography
@@ -288,46 +290,135 @@ export default function StudentDashboard() {
             rideDays={rideDays}
             handleMonthChange={handleMonthChange}
           />
-          <Typography variant="h6" sx={{ mb: 2, mt: 1 }}>
-            Your Environmental Impact
-          </Typography>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 3,
-              pb: 5,
-              pt: 5,
+              bgcolor: "white",
+              pt: 3,
+              pb: 4,
+              px: 2,
+              border: "1px solid ",
+              width: { xs: "89%", sm: "79%" },
+
+              borderColor: "divider",
+              borderRadius: 4,
             }}
           >
-            <Box sx={{ textAlign: "center" }}>
-              <Bike size={32} color={theme.palette.green.main} />
-              <Typography variant="body2" color="text.secondary">
-                35 kg CO2 Saved
-              </Typography>
-            </Box>
-            <Typography variant="h6">=</Typography>
-            <Box sx={{ textAlign: "center" }}>
-              <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                <img src="/tree.png" alt="Trees" style={{ height: 64 }} />
+            <Typography variant="h6" sx={{ mb: 2, mt: 1 }}>
+              Your Environmental Impact
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                pb: 5,
+                pt: 5,
+              }}
+            >
+              <Box
+                sx={{
+                  textAlign: "center",
+                  height: 100,
+                  maxWidth: "50%",
+                }}
+              >
+                <Typography variant="body2" color="black" fontSize={16}>
+                  <Typography fontWeight={500}  component={"span"}>
+                    {totalBikedAmount > 0
+                      ? ((totalBikedAmount * 95) / 1000).toFixed(0)
+                      : 0}{" "}
+                    kg
+                  </Typography >{" "}
+                  CO2 Saved
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    justifyContent: "center",
+                    mt: 2,
+                  }}
+                >
+                  <img
+                    src="/bike.png"
+                    alt="Trees"
+                    style={{ height: 40, marginTop: 2 }}
+                  />
+                </Box>
               </Box>
-              <Typography variant="body2" color="text.secondary">
-                1,400 Trees planted
-              </Typography>
+
+              <Typography variant="h6">=</Typography>
+
+              <Box
+                sx={{
+                  textAlign: "center",
+                  maxWidth: "50%",
+                  ml:1,
+                  height: 100,
+                }}
+              >
+                <Typography variant="body2" color="black" fontSize={16}>
+                  <Typography color="black" component={"span"} fontWeight={500}>
+                    {totalBikedAmount > 0
+                      ? Math.floor(totalBikedAmount / 100)
+                      : 0}
+                  </Typography>{" "}
+                  Trees planted
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    justifyContent: "center",
+                    mt: 2,
+                  }}
+                >
+                  <img src="/tree.png" alt="Trees" style={{ height: 64 }} />
+                </Box>
+              </Box>
             </Box>
           </Box>
         </Box>
       </Box>
       <Box sx={{ p: 3 }}>
         <LeaderboardPreview leaderboard={leaderboard} />
-
-        <Typography variant="h6" sx={{ mb: 2, ml:1, mt: 6 , textAlign:"left"}}>
+<Link to={"/student/awards"}>
+        <Typography
+          variant="h6"
+          sx={{ mb: 2, ml: 1, mt: 6, textAlign: "left" }}
+          >
           Earned awards
         </Typography>
+          </Link>
         <StudentBadges studentId={session?.user.id as string} />
       </Box>
 
+      <Button
+        variant="contained"
+        sx={{
+          bgcolor: "primary",
+          color: "white",
+          borderRadius: "15px",
+          p: 1,
+          mt: 4,
+          width: "99%",
+          fontWeight: 500,
+          transition: "all 0.3s ease",
+        }}
+        onClick={handleDrawerToggle}
+      >
+        <Typography color="white" variant="h6">
+          Ride History
+        </Typography>
+        <ChevronUp size={18} color="white" />
+      </Button>
+      <RidesDrawer
+        open={openDrawer}
+        handleDrawerToggle={handleDrawerToggle}
+        student={student}
+        allRides={allRides}
+      />
       <Link to={"/student/createride"}>
         <Box
           sx={{
@@ -365,31 +456,6 @@ export default function StudentDashboard() {
           </Button>
         </Box>
       </Link>
-      <IconButton
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          m: "auto",
-          bgcolor: "gray",
-          borderRadius: 10,
-          justifyContent: "space-around",
-          p: 1,
-          mt:2,
-          width: "70%",
-        }}
-        onClick={handleDrawerToggle}
-      >
-        <Typography color="black" variant="h6">
-          Ride History
-        </Typography>
-        <ChevronUp size={18} />
-      </IconButton>
-      <RidesDrawer
-        open={openDrawer}
-        handleDrawerToggle={handleDrawerToggle}
-        student={student}
-        allRides={allRides}
-      />
     </Box>
   );
 }

@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { TextField, Box } from "@mui/material";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from "react-places-autocomplete";
+import { theme } from "../theme/theme";
+import { SCHOOL_LOCATION } from "../lib/staticConsts";
 
-const SCHOOL_LOCATION = {
-  lat: 50.85045, // School's latitude
-  lng: 4.34878   // School's longitude
-};
 
 export const AddressAutocomplete = ({
   onAddressChange,
@@ -17,6 +15,7 @@ export const AddressAutocomplete = ({
   initialAddress?: string;
 }) => {
   const [address, setAddress] = useState(initialAddress);
+  
 
   useEffect(() => {
     if (address && window.google && window.google.maps) {
@@ -73,11 +72,10 @@ export const AddressAutocomplete = ({
       const results = await geocodeByAddress(selectedAddress);
       const { lat, lng } = await getLatLng(results[0]);
 
-      // Pass address, lat, and lng to the parent component
       onAddressChange(selectedAddress, lat, lng);
     } catch (error) {
       console.error("Error selecting address:", error);
-      onAddressChange(undefined, undefined, undefined); // Pass undefined if error occurs
+      onAddressChange(undefined, undefined, undefined); 
       onDistanceChange(0, false);
     }
   };
@@ -87,12 +85,11 @@ export const AddressAutocomplete = ({
       value={address}
       onChange={(newAddress) => {
         setAddress(newAddress);
-        // Pass undefined for lat/lng if the address is manually changed
         onAddressChange(newAddress, undefined, undefined);
       }}
       onSelect={handleSelect}
       searchOptions={{
-        componentRestrictions: { country: "be" }, // Restrict search to Belgium
+        componentRestrictions: { country: "be" }, 
       }}
     >
       {({ getInputProps, suggestions, getSuggestionItemProps }) => (
@@ -105,6 +102,7 @@ export const AddressAutocomplete = ({
               sx: {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
+                  fontFamily: theme.typography.fontFamily,
                 },
                 "& .MuiInputLabel-root": {
                   color: "text.secondary",
@@ -122,6 +120,7 @@ export const AddressAutocomplete = ({
               boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
               maxHeight: "200px",
               overflowY: "auto",
+              fontFamily: theme.typography.fontFamily, 
             }}
           >
             {suggestions.map((suggestion) => (
@@ -131,6 +130,7 @@ export const AddressAutocomplete = ({
                 sx={{
                   padding: "8px 12px",
                   cursor: "pointer",
+                  fontFamily: theme.typography.fontFamily,
                   "&:hover": {
                     backgroundColor: "#f5f5f5",
                   },

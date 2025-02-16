@@ -132,7 +132,7 @@ const RideHistory: React.FC<RideHistoryProps> = ({
                 sx={{
                   position: "relative",
                   width: "100%",
-                  pt: "29.55%",  
+                  pt: {xs:"33%", sm:"26%"},  
                 }}
               >
                 <img
