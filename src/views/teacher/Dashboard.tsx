@@ -550,8 +550,8 @@ export default function TeacherDashboard() {
                 </ListItemButton>
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Bike size={14} />
-                  <Typography>{student.ride_count}</Typography>
+                  <Bike size={13} />
+                  <Typography fontSize={14}>{student.ride_count}</Typography>
                 </Box>
               </ListItem>
             ))}

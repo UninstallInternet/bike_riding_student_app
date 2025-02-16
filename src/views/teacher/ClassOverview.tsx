@@ -25,7 +25,7 @@ interface ClassStatistics {
     };
   }
 const ClassOverview: React.FC = () => {
-  const [selectedClass, setSelectedClass] = useState<string>("All");
+  const [selectedClass, setSelectedClass] = useState<string>("");
   const [studentsData, setStudentsData] = useState<Student[]>([]);
   const [classes, setClasses] = useState<string[]>([]); 
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
@@ -112,12 +112,12 @@ const calculateClassStatistics = (students: Student[]): ClassStatistics => {
             <ArrowLeft />
           </IconButton>
         </Link>
-        <Typography variant="h4" gutterBottom sx={{ mt: 2, fontWeight: 500 }}>
+        <Typography variant="h4" gutterBottom sx={{ mt: 2,  fontWeight: 500 }}>
           General Overview
         </Typography>
       </Box>
 
-      <Typography variant="h4" sx={{ mb: 3, color: "#111827", fontWeight: 700 }}>
+      <Typography variant="h4" sx={{ mb: 3, color: "#111827", fontWeight: 600 }}>
       {selectedClass}  Class  Summary
       </Typography>
 
@@ -128,7 +128,7 @@ const calculateClassStatistics = (students: Student[]): ClassStatistics => {
     onChange={handleClassChange}
     labelId="class-select-label"
     label="Choose Class"
-  >  <MenuItem value="All">All</MenuItem> 
+  >  <MenuItem value="">All</MenuItem> 
 
     {classes.map((className) => (
       <MenuItem key={className} value={className}>
