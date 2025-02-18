@@ -15,6 +15,7 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
+import { Link } from "react-router-dom";
 
 const StudentBadges = ({ studentId }: { studentId: string }) => {
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
@@ -24,7 +25,6 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [open, setOpen] = useState<boolean>(false);
 
-
   useEffect(() => {
     const fetchBadges = async () => {
       try {
@@ -32,24 +32,31 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
           fetchAllBadges(),
           fetchStudentBadges(studentId),
         ]);
-  
-        const allBadgesData = allBadgesDataRaw || []; 
-        const studentBadgesData = studentBadgesDataRaw || []; 
-  
+
+        const allBadgesData = allBadgesDataRaw || [];
+        const studentBadgesData = studentBadgesDataRaw || [];
+
         setAllBadges(allBadgesData as Badge[]);
         setStudentBadges(studentBadgesData as StudentAward[]);
-  
-        const hasShownFirstBadgeModal = sessionStorage.getItem(`hasShownFirstBadgeModal-${studentId}`);
-  
+
+        const hasShownFirstBadgeModal = localStorage.getItem(
+          `hasShownFirstBadgeModal-${studentId}`
+        );
+
         if (studentBadgesData.length > 0 && !hasShownFirstBadgeModal) {
           const firstEarnedBadge = allBadgesData.find((badge) =>
-            studentBadgesData.some((b) => b.badge_id === badge.id && b.awarded_at)
+            studentBadgesData.some(
+              (b) => b.badge_id === badge.id && b.awarded_at
+            )
           );
-  
+
           if (firstEarnedBadge) {
             setSelectedBadge(firstEarnedBadge);
             setOpen(true);
-            sessionStorage.setItem(`hasShownFirstBadgeModal-${studentId}`, "true");
+            localStorage.setItem(
+              `hasShownFirstBadgeModal-${studentId}`,
+              "true"
+            );
           }
         }
       } catch (err) {
@@ -59,11 +66,10 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
         setLoading(false);
       }
     };
-  
+
     fetchBadges();
   }, [studentId]);
-  
-  
+
   const handleClickOpen = (badge: Badge) => {
     setSelectedBadge(badge);
     setOpen(true);
@@ -100,38 +106,42 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
       <Box
         sx={{
           display: "flex",
-          gap: "25px",
+          gap: "10px",
           mb: 2,
           flexWrap: "wrap",
           justifyContent: "start",
         }}
       >
-        {allBadges.map((badge) => {
-          const isObtained = studentBadges.some(
-            (b) => b.badge_id === badge.id && b.awarded_at
-          );
+        {allBadges
+          .filter((badge) =>
+            studentBadges.some((b) => b.badge_id === badge.id && b.awarded_at)
+          )
+          .map((badge) => {
+            const isObtained = studentBadges.some(
+              (b) => b.badge_id === badge.id && b.awarded_at
+            );
 
-          return (
-            <Box
-              key={badge.id}
-              sx={{
-                textAlign: "center",
-                mx: 1,
-                cursor: "pointer",
-                position: "relative",
-                opacity: isObtained ? 1 : 0.5, 
-                filter: isObtained ? "none" : "grayscale(100%)",
-              }}
-              onClick={() => handleClickOpen(badge)}
-            >
-              <img
-                src={badge.icon_url || "/default-icon.png"}
-                alt={badge.name}
-                style={{ width: "80px", height: "80px" }}
-              />
-            </Box>
-          );
-        })}
+            return (
+              <Box
+                key={badge.id}
+                sx={{
+                  textAlign: "center",
+                  mx: 1,
+                  cursor: "pointer",
+                  position: "relative",
+                  opacity: isObtained ? 1 : 0.5,
+                  filter: isObtained ? "none" : "grayscale(100%)",
+                }}
+                onClick={() => handleClickOpen(badge)}
+              >
+                <img
+                  src={badge.icon_url || "/default-icon.png"}
+                  alt={badge.name}
+                  style={{ width: "80px", height: "80px" }}
+                />
+              </Box>
+            );
+          })}
       </Box>
 
       {selectedBadge && (
@@ -196,6 +206,24 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
           </DialogActions>
         </Dialog>
       )}
+      <Link to={"/student/awards"}>
+      <Button
+        variant="contained"
+        sx={{
+          bgcolor: "primary",
+          color: "white",
+          borderRadius: "15px",
+          p: 1,
+          mt: 4,
+          width: "97%",
+          fontWeight: 500,
+          transition: "all 0.3s ease",
+          mb:3,
+        }}
+        >
+        View All Awards
+      </Button>
+        </Link>
     </Box>
   );
 };

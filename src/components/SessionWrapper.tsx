@@ -29,7 +29,7 @@ function Wrapper({ children }: { children: ReactNode }) {
     };
   
     fetchUserRole();
-  }, [session]); 
+  }, []); 
   
   
   

@@ -29,7 +29,7 @@ function StudentWrapper({ children }: { children: ReactNode }) {
     };
   
     fetchUserRole();
-  }, [session]);
+  }, []);
   
   
   

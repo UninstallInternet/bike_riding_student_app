@@ -40,23 +40,23 @@ export default function StudentDashboard() {
   const isSmallScreen = useMediaQuery("(max-width:435px)");
   useEffect(() => {
     if (student?.id) {
-      const hasSeenPrivacyDialog = sessionStorage.getItem(
+      const hasSeenPrivacyDialog = localStorage.getItem(
         `hasSeenPrivacyDialog-${student.id}`
       );
-
+  
       if (!hasSeenPrivacyDialog) {
         setShowPrivacyDialog(true);
       }
     }
   }, [student]);
-
+  
   const handlePrivacyDialogClose = () => {
     if (student?.id) {
-      sessionStorage.setItem(`hasSeenPrivacyDialog-${student.id}`, "true");
+      localStorage.setItem(`hasSeenPrivacyDialog-${student.id}`, "true");
     }
     setShowPrivacyDialog(false);
   };
-
+  
   useEffect(() => {
     const fetchStudentData = async () => {
       if (!session?.user?.id) return;

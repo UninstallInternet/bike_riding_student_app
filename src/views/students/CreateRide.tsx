@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { Check } from "lucide-react";
+import { Check, CircleAlert } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { UserAuth } from "../../context/AuthContext";
 import { useEffect, useRef, useState } from "react";
@@ -15,6 +15,7 @@ export const CreateRide = () => {
   const [student, setStudent] = useState<StudentWithRides[] | null>(null);
   const [error, setError] = useState("");
   const [succes, setSucess] = useState("");
+  const [warning, setWarning] = useState("");
   const [forceRender, setForceRender] = useState(false);
 
   const [timeLeft, setTimeLeft] = useState(60);
@@ -45,15 +46,15 @@ export const CreateRide = () => {
 
   const resetFlow = () => {
     if (timerRef.current) {
-      clearInterval(timerRef.current); 
+      clearInterval(timerRef.current);
     }
     bikeScanned.current = "";
     schoolScanned.current = "";
     setTimeLeft(60);
-    setError("Time's up! Please scan the bike QR code again."); 
+    setError("Time's up! Please scan the bike QR code again");
     setSucess("");
 
-    setForceRender((prev) => !prev); 
+    setForceRender((prev) => !prev);
   };
 
   const handleError = (error: unknown) => {
@@ -69,15 +70,16 @@ export const CreateRide = () => {
     if (scannedString) {
       if (
         student &&
-        !bikeScanned.current && 
+        !bikeScanned.current &&
         scannedString === student[0].bike_qr_code
       ) {
         bikeScanned.current = scannedString;
         console.log("Bike QR code validated");
         setSucess("Bike QR code validated");
+        setWarning("Please scan school QR next!");
         setError("");
-        setTimeLeft(60); 
-        startTimer(); 
+        setTimeLeft(60);
+        startTimer();
       } else if (
         bikeScanned.current &&
         !schoolScanned.current &&
@@ -97,9 +99,7 @@ export const CreateRide = () => {
           setError("Invalid QR Code, First scan bike code");
         } else if (!schoolScanned.current) {
           console.error("Invalid School QR code");
-          setError(
-            "Invalid School code, make sure you scan school code after bike"
-          );
+          setError("Invalid School code, try school code again");
         }
       }
     }
@@ -151,7 +151,7 @@ export const CreateRide = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          height: "90vh",
+          height: "108vh",
           bgcolor: "gray",
           borderRadius: 10,
           opacity: 0.9,
@@ -194,11 +194,25 @@ export const CreateRide = () => {
               border={"1px dotted red"}
               bgcolor={"brown"}
               py={1}
+              borderRadius={4}
               fontWeight={600}
+              mb={1}
               variant="h6"
-              sx={{ textAlign: "center", maxWidth: "90%", mx: "auto" }}
+              width={"100%"}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                justifyContent: "center",
+                maxWidth: "90%",
+                mx: "auto",
+                px:1,
+                fontSize: { xs: "14px", sm: "18px" },
+                width: { xs: "98%", sm: "60%" },
+              }}
             >
               {error}
+              <CircleAlert size={20} />
             </Typography>
           )}
 
@@ -208,18 +222,20 @@ export const CreateRide = () => {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
+                flexDirection: "column",
                 gap: 1,
+                mb: 1,
+                borderRadius: 4,
                 width: { xs: "98%", sm: "60%" },
                 border: "1px dotted green",
                 mx: "auto",
                 py: 1,
               }}
             >
-              <Typography color={"white"} fontWeight={600} variant="h6">
-                {succes}
+              <Typography sx={{display:"flex", alignItems:"center", gap:1}} color={"white"} fontWeight={600} variant="h6">
+                {succes} <Check size={24} color="white" />
               </Typography>
-              <Check size={24} color="white" />
+              <Typography sx={{display:"flex", alignItems:"center", gap:1}}  color="white">{warning}</Typography> 
             </Box>
           )}
 

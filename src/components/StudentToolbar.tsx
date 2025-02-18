@@ -25,7 +25,9 @@ export const StudentToolbar = ({ title }: { title: string;}) => {
       <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
         {title}
       </Typography>
+     <Link to={"/student/edit"}>
       <UserAvatar></UserAvatar>
+     </Link> 
     </Toolbar>
   );
 };

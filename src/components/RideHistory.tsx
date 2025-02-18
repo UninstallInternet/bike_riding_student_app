@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { Bike, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Rides } from "../lib/api";
@@ -132,7 +132,7 @@ const RideHistory: React.FC<RideHistoryProps> = ({
                 sx={{
                   position: "relative",
                   width: "100%",
-                  pt: {xs:"33%", sm:"26%"},  
+                  pt: { xs: "33%", sm: "26%" },
                 }}
               >
                 <img
@@ -152,6 +152,21 @@ const RideHistory: React.FC<RideHistoryProps> = ({
             </Link>
           </Box>
         ))}
+      <Link to={"/student/allrides"}>
+        <Button
+          variant="contained"
+          sx={{
+            bgcolor: "primary",
+            color: "white",
+            borderRadius: "15px",
+            width: "100%",
+            fontWeight: 500,
+            transition: "all 0.3s ease",
+          }}
+        >
+          View All Rides
+        </Button>
+      </Link>
     </Box>
   );
 };

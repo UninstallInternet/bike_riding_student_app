@@ -1,4 +1,3 @@
-// router.tsx
 import { createBrowserRouter } from "react-router-dom";
 import StudentLoginPage from "./views/students/StudentLoginPage";
 import TeacherLoginPage from "./views/teacher/TeacherLoginPage";
