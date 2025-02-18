@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, IconButton, ListItemText, Drawer } from '@mui/material';
+import { Box, IconButton, ListItemText, Drawer, Button } from '@mui/material';
 import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RideHistory from './RideHistory';
@@ -98,6 +98,22 @@ const RidesDrawer: React.FC<RidesDrawerProps> = ({ open, handleDrawerToggle, stu
         >
           <RideHistory student={student} singleRides={allRides} />
         </Box>
+        <Link to={"/student/allrides"}>
+        <Button
+          variant="contained"
+          sx={{
+            bgcolor: "primary",
+            color: "white",
+            borderRadius: "15px",
+            mt:2,
+            px:42,
+            fontWeight: 500,
+            transition: "all 0.3s ease",
+          }}
+        >
+          View All Rides
+        </Button>
+      </Link>
       </Box>
     </Drawer>
   );
