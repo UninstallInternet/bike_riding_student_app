@@ -393,6 +393,8 @@ export default function StudentDashboard() {
           </Link>
         <StudentBadges studentId={session?.user.id as string} />
       </Box>
+      <Box sx={{padding:3}}>
+
 
       <Button
         variant="contained"
@@ -401,24 +403,26 @@ export default function StudentDashboard() {
           color: "white",
           borderRadius: "15px",
           p: 1,
+          
           mt: 4,
-          width: "99%",
+          width: "97%", 
           fontWeight: 500,
           transition: "all 0.3s ease",
         }}
         onClick={handleDrawerToggle}
-      >
+        >
         <Typography color="white" variant="h6">
           Ride History
         </Typography>
         <ChevronUp size={18} color="white" />
       </Button>
+          </Box>
       <RidesDrawer
         open={openDrawer}
         handleDrawerToggle={handleDrawerToggle}
         student={student}
         allRides={allRides}
-      />
+        />
       <Link to={"/student/createride"}>
         <Box
           sx={{
@@ -431,7 +435,7 @@ export default function StudentDashboard() {
             justifyContent: "center",
             gap: 2,
           }}
-        >
+          >
           <Button
             type="submit"
             variant="contained"
@@ -448,7 +452,7 @@ export default function StudentDashboard() {
                 bgcolor: "#2bb974",
               },
             }}
-          >
+            >
             <QrCode size={18} />
             <Typography fontSize={17} sx={{ marginLeft: 1 }}>
               Log Ride

@@ -106,7 +106,7 @@ const RidesDrawer: React.FC<RidesDrawerProps> = ({ open, handleDrawerToggle, stu
             color: "white",
             borderRadius: "15px",
             mt:2,
-            px:42,
+            px:{xs:14, sm:24},
             fontWeight: 500,
             transition: "all 0.3s ease",
           }}
