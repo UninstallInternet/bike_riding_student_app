@@ -6,12 +6,12 @@ import { QrCode, ChevronUp } from "lucide-react";
 import { UserAuth } from "../../context/AuthContext";
 import {
   fetchStudents,
-  handleLogout,
   Rides,
   StudentWithRides,
   studentWithRidesQuery,
+  updateUserFlags,
 } from "../../lib/api";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import BikingStatsCard from "../../components/BikingStatsCard";
 import { LeaderboardPreview } from "../../components/LeaderboardPreview";
 import { LeaderboardUser } from "../../lib/specificTypes";
@@ -21,10 +21,10 @@ import { CircularProgress, useMediaQuery } from "@mui/material";
 import PrivacyDialog from "../../components/PrivacyDialog";
 import RidesDrawer from "../../components/RidesDrawer";
 import { CalendarComponent } from "../../components/CalendarComponent";
-import { UserAvatar } from "../../components/UserAvatar";
+import { StudentToolbar } from "../../components/StudentToolbar";
+import { theme } from "../../theme/theme";
 
 export default function StudentDashboard() {
-  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -38,23 +38,13 @@ export default function StudentDashboard() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width:435px)");
-  useEffect(() => {
-    if (student?.id) {
-      const hasSeenPrivacyDialog = localStorage.getItem(
-        `hasSeenPrivacyDialog-${student.id}`
-      );
-  
-      if (!hasSeenPrivacyDialog) {
-        setShowPrivacyDialog(true);
-      }
-    }
-  }, [student]);
-  
-  const handlePrivacyDialogClose = () => {
-    if (student?.id) {
-      localStorage.setItem(`hasSeenPrivacyDialog-${student.id}`, "true");
-    }
+
+
+  const handlePrivacyDialogClose = async () => {
     setShowPrivacyDialog(false);
+    if (student?.id) {
+      await updateUserFlags(student.id, { hasSeenPrivacyDialog: true });
+    }
   };
   
   useEffect(() => {
@@ -68,7 +58,10 @@ export default function StudentDashboard() {
           setStudent(studentData as StudentWithRides);
           setRideCount(studentData.rides ? studentData.rides.length : 0);
           setAllRides(studentData.rides as Rides[]);
-
+          if (!studentData.hasSeenPrivacyDialog) {
+            setShowPrivacyDialog(true);
+          }
+          console.log(studentData)
           if (studentData.rides?.length > 0) {
             const sortedRides = studentData.rides.sort(
               (a, b) =>
@@ -174,40 +167,7 @@ export default function StudentDashboard() {
 
       {/* Header */}
       <Box sx={{ pt: 2, pb: 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            position: "relative",
-            width: "100%",
-            mb: 2,
-          }}
-        >
-          <Link to={"/student/edit"}>
-            <UserAvatar />
-          </Link>
-
-          <Typography variant="h6" sx={{ flexGrow: 1, textAlign: "center" }}>
-            Student Dashboard
-          </Typography>
-          {session && (
-            <Button
-              variant="contained"
-              onClick={() => handleLogout(navigate)}
-              sx={{
-                bgcolor: "primary",
-                color: "white",
-                borderRadius: "15px",
-                p: 1,
-
-                fontWeight: 500,
-                transition: "all 0.3s ease",
-              }}
-            >
-              Log Out
-            </Button>
-          )}
-        </Box>
+      <StudentToolbar title="Student Dashboard" showBackArrow={false} />
         <Box
           sx={{
             m: "auto",
@@ -440,7 +400,7 @@ export default function StudentDashboard() {
             type="submit"
             variant="contained"
             sx={{
-              bgcolor: "#35D187",
+              bgcolor: theme.palette.blue.main,
               color: "white",
               py: { xs: 1.5, sm: 2 },
               width: { xs: "38%", sm: "20%" },
@@ -449,7 +409,7 @@ export default function StudentDashboard() {
               textTransform: "none",
               boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
               "&:hover": {
-                bgcolor: "#2bb974",
+                bgcolor: "#0d679e",
               },
             }}
             >
@@ -463,3 +423,4 @@ export default function StudentDashboard() {
     </Box>
   );
 }
+

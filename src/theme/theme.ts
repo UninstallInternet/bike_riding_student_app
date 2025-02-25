@@ -38,7 +38,7 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: "9999px",
-          textTransform: "none", // Prevents all-caps text
+          textTransform: "none", 
           padding: "12px 0",
           fontSize: "1rem",
         },

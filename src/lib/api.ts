@@ -1,17 +1,6 @@
-// import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 import { Database } from "../db_types";
 import { supabase } from "./supabase";
 
-// export const handleSignUp = async (credentials: SignUpWithPasswordCredentials) => {
-//   if (!("email" in credentials)) return;
-//   const { email, password } = credentials;
-//   const { error, data } = await supabase.auth.signUp({
-//     email,
-//     password,
-//   });
-//   if (error) console.error(error.message);
-//   console.log(data);
-// };
 
 export const handleLogout = async (navigate: (path: string) => void) => {
   const { error } = await supabase.auth.signOut();
@@ -68,6 +57,13 @@ export const fetchStudentsOverview = async (className?: string, month?: number) 
   return studentsWithRides;
 };
 
+export const fetchStudentsQrs = async () => {
+  const {data, error} = await supabase.from("students").select("name,bike_qr_code");
+  if(error){
+    console.error(error)
+  }
+  return data;
+}
 
 export const fetchStudents = async () => {
   const { data, error } = await supabase.from("students").select(
@@ -374,7 +370,7 @@ export const studentWithRidesQuery = async (id: string) => {
   const { data, error } = await supabase
     .from("students")
     .select(
-      `id, name, class, address, distance_to_school, bike_qr_code, lat,lng,starting_year,is_active, distance_img, profile_pic_url, rides(*)`
+      `id, name, class, address, distance_to_school, bike_qr_code, lat,lng,starting_year,is_active, distance_img, profile_pic_url, hasSeenPrivacyDialog, hasSeenFirstAwardModal, rides(*)`
     )
     .eq("id", id)
     .single();
@@ -441,6 +437,24 @@ export async function fetchAllBadges () {
   return data;
 }
 
+  export const updateUserFlags = async (
+    userId: string,
+    flags: { hasSeenPrivacyDialog?: boolean; hasSeenFirstAwardModal?: boolean }
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from("students") // Assuming your table name is "users"
+        .update(flags) // Update only the provided flags
+        .eq("id", userId); // Match the specific user
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error updating user flags:", error);
+      return { success: false, message: "Failed to update user flags" };
+    }
+  };
 
 export type StudentWithRides = {
   id: string;
@@ -453,6 +467,8 @@ export type StudentWithRides = {
   lng: number;
   starting_year: string;
   is_active: boolean;
+  hasSeenPrivacyDialog: boolean;
+  hasSeenFirstAwardModal: boolean;
   distance_img: string;
   profile_pic_url: string | undefined;
   rides: { id: string; ride_date: string }[];

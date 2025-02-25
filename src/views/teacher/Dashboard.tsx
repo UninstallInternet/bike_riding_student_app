@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -13,12 +11,10 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
 import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
 import {
   Filter as FilterList,
   Search,
   ChevronUp,
-  UserPlus,
   Trash2,
   UserMinus,
   X,
@@ -49,6 +45,7 @@ import {
 import FilterPanel from "../../components/FilterPanel";
 import ManagePanel from "../../components/ManagePanel";
 import ExportPanel from "../../components/ExportPanel";
+import { TeacherToolbar } from "../../components/TeacherToolbar";
 
 export default function TeacherDashboard() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -295,43 +292,16 @@ export default function TeacherDashboard() {
           color: "text.primary",
           p: 0.5,
         }}
-      >
-        <Toolbar>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Link to={"/teacher/editself"}>
-              <Avatar
-                src={teacher?.profile_pic_url || undefined}
-                sx={{ width: 32, height: 32 }}
-              />
-            </Link>
-            <Typography
-              fontSize={isSmallScreen ? "14px" : "22px"}
-              component="h1"
-              fontWeight={"500"}
-            >
-        Teacher Dashboard
-            </Typography>
-          </Stack>
-
-          <Box sx={{ flexGrow: 1 }} />
-          <Link to={"/teacher/overview"}>
-          <Button sx={{mr:1, border: "1px solid #81c784", p:0.5}}>Overview</Button>
-          </Link>
-          <IconButton>
-            <Link to="/teacher/adduser">
-              <UserPlus />
-            </Link>
-          </IconButton>
-
-
-        </Toolbar>
+      > 
+        <TeacherToolbar title="Teacher Dashboard" showBackArrow={false} />
+        
       </AppBar>
       <Container>
         <Typography
           variant="h6"
           sx={{
-            mt: 3,
-            mb: 2,
+            mt: 2,
+            mb: 1,
             fontWeight: 500,
             textAlign: "left",
             borderBottom: "1px solid",

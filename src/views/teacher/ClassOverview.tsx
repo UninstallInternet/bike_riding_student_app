@@ -241,6 +241,7 @@ const calculateClassStatistics = (students: Student[]): ClassStatistics => {
           }}
         />
       </Paper>
+      
     </Box>
   );
 };

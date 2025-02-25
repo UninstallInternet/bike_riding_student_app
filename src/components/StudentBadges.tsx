@@ -3,7 +3,9 @@ import {
   Badge,
   fetchAllBadges,
   fetchStudentBadges,
+  fetchStudentbyId,
   StudentAward,
+  updateUserFlags,
 } from "../lib/api";
 import {
   Typography,
@@ -24,70 +26,76 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
   const [error, setError] = useState<string | null>(null);
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const [open, setOpen] = useState<boolean>(false);
+  const [hasSeenFirstAwardModal, setHasSeenFirstAwardModal] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchBadges = async () => {
+    const fetchData = async () => {
       try {
-        const [allBadgesDataRaw, studentBadgesDataRaw] = await Promise.all([
+        const [allBadgesDataRaw, studentBadgesDataRaw, studentInfo] = await Promise.all([
           fetchAllBadges(),
           fetchStudentBadges(studentId),
+          fetchStudentbyId(studentId),
         ]);
 
         const allBadgesData = allBadgesDataRaw || [];
         const studentBadgesData = studentBadgesDataRaw || [];
-
+        
         setAllBadges(allBadgesData as Badge[]);
         setStudentBadges(studentBadgesData as StudentAward[]);
+        const modalSeen = Boolean(studentInfo?.[0]?.hasSeenFirstAwardModal);
+        setHasSeenFirstAwardModal(modalSeen);
 
-        const hasShownFirstBadgeModal = localStorage.getItem(
-          `hasShownFirstBadgeModal-${studentId}`
-        );
-
-        if (studentBadgesData.length > 0 && !hasShownFirstBadgeModal) {
+        if (!modalSeen) {
           const firstEarnedBadge = allBadgesData.find((badge) =>
-            studentBadgesData.some(
-              (b) => b.badge_id === badge.id && b.awarded_at
-            )
+            studentBadgesData.some((b) => b.badge_id === badge.id && b.awarded_at)
           );
 
           if (firstEarnedBadge) {
+            console.log("Found first earned badge:", firstEarnedBadge.name);
             setSelectedBadge(firstEarnedBadge);
             setOpen(true);
-            localStorage.setItem(
-              `hasShownFirstBadgeModal-${studentId}`,
-              "true"
-            );
+          } else {
+            console.log("No earned badges found");
           }
         }
       } catch (err) {
         setError("Error fetching badges.");
-        console.error(err);
+        console.error("Error in fetchData:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBadges();
+    if (studentId) {
+      fetchData();
+    }
   }, [studentId]);
-
-  const handleClickOpen = (badge: Badge) => {
-    setSelectedBadge(badge);
-    setOpen(true);
-  };
-
-  const handleClose = () => {
+  
+  const handleClose = async () => {
     setOpen(false);
+    
+    if (!hasSeenFirstAwardModal) {
+      try {
+        console.log("Updating hasSeenFirstAwardModal to true for student:", studentId);
+        const response = await updateUserFlags(studentId, { hasSeenFirstAwardModal: true });
+        
+        if (response.success) {
+          console.log("Successfully updated hasSeenFirstAwardModal to true");
+          setHasSeenFirstAwardModal(true);
+        } else {
+          console.error("Failed to update hasSeenFirstAwardModal:", response.message);
+        }
+      } catch (error) {
+        console.error("Error updating user flags:", error);
+      }
+    }
+    
     setSelectedBadge(null);
   };
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100%"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="100%">
         <CircularProgress />
       </Box>
     );
@@ -117,9 +125,7 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
             studentBadges.some((b) => b.badge_id === badge.id && b.awarded_at)
           )
           .map((badge) => {
-            const isObtained = studentBadges.some(
-              (b) => b.badge_id === badge.id && b.awarded_at
-            );
+            const isObtained = studentBadges.some((b) => b.badge_id === badge.id && b.awarded_at);
 
             return (
               <Box
@@ -132,13 +138,12 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
                   opacity: isObtained ? 1 : 0.5,
                   filter: isObtained ? "none" : "grayscale(100%)",
                 }}
-                onClick={() => handleClickOpen(badge)}
+                onClick={() => {
+                  setSelectedBadge(badge);
+                  setOpen(true);
+                }}
               >
-                <img
-                  src={badge.icon_url || "/default-icon.png"}
-                  alt={badge.name}
-                  style={{ width: "80px", height: "80px" }}
-                />
+                <img src={badge.icon_url || "/default-icon.png"} alt={badge.name} style={{ width: "80px", height: "80px" }} />
               </Box>
             );
           })}
@@ -152,48 +157,22 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
           open={open}
           onClose={handleClose}
         >
-          <DialogContent
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <DialogContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
             <Box
               sx={{
-                opacity: studentBadges.some(
-                  (b) => b.badge_id === selectedBadge.id && b.awarded_at
-                )
-                  ? 1
-                  : 0.5,
-                filter: studentBadges.some(
-                  (b) => b.badge_id === selectedBadge.id && b.awarded_at
-                )
-                  ? "none"
-                  : "grayscale(100%)",
+                opacity: studentBadges.some((b) => b.badge_id === selectedBadge.id && b.awarded_at) ? 1 : 0.5,
+                filter: studentBadges.some((b) => b.badge_id === selectedBadge.id && b.awarded_at) ? "none" : "grayscale(100%)",
               }}
             >
               <img
                 src={selectedBadge.icon_url || "/default-icon.png"}
                 alt={selectedBadge.name}
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  marginBottom: "10px",
-                  paddingTop: "15px",
-                }}
+                style={{ width: "100px", height: "100px", marginBottom: "10px", paddingTop: "15px" }}
               />
             </Box>
 
             <DialogTitle>
-              {" "}
-              {studentBadges.some(
-                (b) => b.badge_id === selectedBadge.id && b.awarded_at
-              )
-                ? "🎉"
-                : ""}{" "}
-              {selectedBadge.name}
+              {studentBadges.some((b) => b.badge_id === selectedBadge.id && b.awarded_at) ? "🎉" : ""} {selectedBadge.name}
             </DialogTitle>
             <Typography textAlign="center" variant="body1">
               {selectedBadge.description}
@@ -201,29 +180,30 @@ const StudentBadges = ({ studentId }: { studentId: string }) => {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} sx={{ color: "black" }}>
-              <Typography color="black">Close</Typography>
+              <Typography color="black">OK</Typography>
             </Button>
           </DialogActions>
         </Dialog>
       )}
+
       <Link to={"/student/awards"}>
-      <Button
-        variant="contained"
-        sx={{
-          bgcolor: "primary",
-          color: "white",
-          borderRadius: "15px",
-          p: 1,
-          mt: 4,
-          width: "97%",
-          fontWeight: 500,
-          transition: "all 0.3s ease",
-          mb:3,
-        }}
+        <Button
+          variant="contained"
+          sx={{
+            bgcolor: "primary",
+            color: "white",
+            borderRadius: "15px",
+            p: 1,
+            mt: 4,
+            width: "97%",
+            fontWeight: 500,
+            transition: "all 0.3s ease",
+            mb: 3,
+          }}
         >
-        View All Awards
-      </Button>
-        </Link>
+          View All Awards
+        </Button>
+      </Link>
     </Box>
   );
 };

@@ -115,7 +115,7 @@ export const CreateRide = () => {
         student_id: student[0].id,
         ride_date: new Date().toISOString(),
         bike_qr_scanned: bikeScanned.current,
-        distance: student[0].distance_to_school,
+        distance: student[0].distance_to_school * 2,
         distance_img: student[0].distance_img,
       };
 
