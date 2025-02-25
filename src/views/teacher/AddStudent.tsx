@@ -4,12 +4,9 @@ import Container from "@mui/material/Container";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import { ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AddressAutocomplete } from "../../components/AdressAutoComplete";
 import { addStudent, Student } from "../../lib/api";
 import { supabaseTeacher } from "../../lib/supabase";
@@ -17,6 +14,7 @@ import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 import { classes, SCHOOL_LOCATION, years } from "../../lib/staticConsts";
 import { v4 as uuidv4 } from "uuid"; 
 import QRCode from "qrcode";
+import { TeacherToolbar } from "../../components/TeacherToolbar";
 
 export default function AddStudent() {
   const [isDistanceValid, setIsDistanceValid] = useState(false);
@@ -209,16 +207,7 @@ export default function AddStudent() {
           borderColor: "divider",
         }}
       >
-        <Toolbar>
-          <Link to={"/teacher/dashboard"}>
-            <IconButton edge="start" sx={{ mr: 2 }}>
-              <ArrowLeft />
-            </IconButton>
-          </Link>
-          <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
-            Add new student
-          </Typography>
-        </Toolbar>
+   <TeacherToolbar title="Add Student" showBackArrow={true} />
       </AppBar>
 
       <Container maxWidth="sm">

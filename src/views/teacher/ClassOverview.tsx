@@ -5,17 +5,16 @@ import {
   Paper,
   Grid,
   LinearProgress,
-  IconButton,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
   SelectChangeEvent,
 } from "@mui/material";
-import { Bike, Users, TrendingUp, Award, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Bike, Users, TrendingUp, Award } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { fetchStudentsOverview, Student } from "../../lib/api";
+import { TeacherToolbar } from "../../components/TeacherToolbar";
 interface ClassStatistics {
     totalDistance: number;
     averageDistance: number;
@@ -97,25 +96,7 @@ const calculateClassStatistics = (students: Student[]): ClassStatistics => {
         margin: "auto",
       }}
     >
-      <Box
-        sx={{
-          px: 2,
-          py: 0.5,
-          display: "flex",
-          alignItems: "center",
-          borderBottom: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Link to={"/teacher/dashboard"}>
-          <IconButton edge="start" sx={{ mr: 4, mt: 1 }}>
-            <ArrowLeft />
-          </IconButton>
-        </Link>
-        <Typography variant="h4" gutterBottom sx={{ mt: 2,  fontWeight: 500 }}>
-          General Overview
-        </Typography>
-      </Box>
+ <TeacherToolbar title="General Overview" showBackArrow={true} />
 
       <Typography variant="h4" sx={{ mb: 3, color: "#111827", fontWeight: 600 }}>
       {selectedClass}  Class  Summary

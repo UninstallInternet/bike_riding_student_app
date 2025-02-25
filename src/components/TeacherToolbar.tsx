@@ -165,16 +165,7 @@ export const TeacherToolbar = ({
         </Typography>
 
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <IconButton
-            component={Link}
-            to="/teacher/adduser"
-            sx={{
-              mr: 2,
-              "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
-            }}
-          >
-            <UserPlus />
-          </IconButton>
+
 
           <IconButton
             edge="end"
