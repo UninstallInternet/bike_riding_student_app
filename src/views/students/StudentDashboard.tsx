@@ -127,9 +127,11 @@ export default function StudentDashboard() {
   useEffect(() => {
     fetchRideDays(currentMonth, currentYear);
   }, [currentMonth, currentYear]);
-  const totalBikedAmount = student?.distance_to_school
-    ? student.distance_to_school * rideCount
-    : 0;
+  
+  const totalBikedAmount = student?.rides?.reduce(
+    (acc, ride) => acc + (ride.distance || 0),
+    0
+  ) || 0;
 
   useEffect(() => {
     const loadData = async () => {

@@ -493,7 +493,7 @@ export type StudentWithRides = {
   hasSeenFirstAwardModal: boolean;
   distance_img: string;
   profile_pic_url: string | undefined;
-  rides: { id: string; ride_date: string }[];
+  rides: { id: string; ride_date: string; distance: number | null }[];
 };
 
 
