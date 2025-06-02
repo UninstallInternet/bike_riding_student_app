@@ -23,6 +23,7 @@ import RidesDrawer from "../../components/RidesDrawer";
 import { CalendarComponent } from "../../components/CalendarComponent";
 import { StudentToolbar } from "../../components/StudentToolbar";
 import { theme } from "../../theme/theme";
+import { calculateCO2Saved, calculateTreesEquivalent } from "../../lib/constants";
 
 export default function StudentDashboard() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -64,7 +65,7 @@ export default function StudentDashboard() {
           console.log(studentData)
           if (studentData.rides?.length > 0) {
             const sortedRides = studentData.rides.sort(
-              (a, b) =>
+              (a: Rides, b: Rides) =>
                 new Date(b.ride_date as string).getTime() -
                 new Date(a.ride_date as string).getTime()
             );
@@ -92,12 +93,12 @@ export default function StudentDashboard() {
 
     const studentData = await studentWithRidesQuery(session.user.id);
     if (studentData?.rides) {
-      const filteredRides = studentData.rides.filter((ride) => {
+      const filteredRides = studentData.rides.filter((ride: Rides) => {
         const rideDate = new Date(ride.ride_date);
         return rideDate.getMonth() === month && rideDate.getFullYear() === year;
       });
 
-      const rideDays = filteredRides.map((ride) => ({
+      const rideDays = filteredRides.map((ride: Rides) => ({
         day: new Date(ride.ride_date).getDate(),
         id: ride.id,
       }));
@@ -284,12 +285,12 @@ export default function StudentDashboard() {
                 }}
               >
                 <Typography variant="body2" color="black" fontSize={16}>
-                  <Typography fontWeight={500}  component={"span"}>
+                  <Typography fontWeight={500} component={"span"}>
                     {totalBikedAmount > 0
-                      ? ((totalBikedAmount * 95) / 1000).toFixed(0)
+                      ? calculateCO2Saved(totalBikedAmount).toFixed(0)
                       : 0}{" "}
                     kg
-                  </Typography >{" "}
+                  </Typography>{" "}
                   CO2 Saved
                 </Typography>
                 <Box
@@ -314,14 +315,14 @@ export default function StudentDashboard() {
                 sx={{
                   textAlign: "center",
                   maxWidth: "50%",
-                  ml:1,
+                  ml: 1,
                   height: 100,
                 }}
               >
                 <Typography variant="body2" color="black" fontSize={16}>
                   <Typography color="black" component={"span"} fontWeight={500}>
                     {totalBikedAmount > 0
-                      ? Math.floor(totalBikedAmount / 100)
+                      ? calculateTreesEquivalent(totalBikedAmount)
                       : 0}
                   </Typography>{" "}
                   Trees planted

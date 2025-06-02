@@ -45,12 +45,12 @@ export const fetchStudentsOverview = async (className?: string, month?: number) 
     return [];
   }
 
-  const studentsWithRides = students.map((student) => {
-    const studentRides = rides.filter((ride) => ride.student_id === student.id);
+  const studentsWithRides = students.map((student: Student) => {
+    const studentRides = rides.filter((ride: Rides) => ride.student_id === student.id);
     return {
       ...student,
       rides: studentRides,
-      totalDistance: studentRides.reduce((sum, ride) => sum + ride.distance, 0),
+      totalDistance: studentRides.reduce((sum: number, ride: Rides) => sum + (ride.distance ?? 0), 0),
     };
   });
 
@@ -68,14 +68,14 @@ export const fetchStudentsQrs = async () => {
 export const fetchStudents = async () => {
   const { data, error } = await supabase.from("students").select(
     `*,
-      rides (id, distance)`
+      rides (id, distance, ride_date)`
   );
 
   if (error) {
     console.error(error);
     return [];
   } else {
-    const studentsWithRidesAndDistance = data.map((student) => {
+    const studentsWithRidesAndDistance = data.map((student: Student) => {
       const ride_count = student.rides.length;
       const totalDistance = student.rides.reduce(
         (sum: number, ride: Rides) => sum + (ride.distance ?? 0),
@@ -84,12 +84,13 @@ export const fetchStudents = async () => {
       return {
         ...student,
         ride_count,
-        totalDistance,
+        totalDistance: parseFloat(totalDistance.toFixed(2)),
       };
     });
 
     const sortedStudents = studentsWithRidesAndDistance.sort(
-      (a, b) => b.totalDistance - a.totalDistance
+      (a: Student & { totalDistance: number }, b: Student & { totalDistance: number }) => 
+        b.totalDistance - a.totalDistance
     );
 
     return sortedStudents;
@@ -308,7 +309,7 @@ export const exportStudentsCsv = async (
 
     headers.push("total Km");
 
-    const processedLines = lines.map((line, index) => {
+    const processedLines = lines.map((line: string, index: number) => {
       const columns = line.split(",");
 
       if (!fields.includes("name") && nameIndex !== -1) {
