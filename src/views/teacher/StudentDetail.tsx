@@ -26,6 +26,7 @@ import DeactivateButton from "../../components/DeactivateButton";
 import DeactivateDialog from "../../components/DeactivateDialog";
 import BikingStatsCard from "../../components/BikingStatsCard";
 import TeacherRidesDisplay from "../../components/TeacherRidesDisplay";
+import { calculateCO2Saved, calculateTreesEquivalent } from "../../lib/constants";
 
 export default function StudentDetails() {
   const { id } = useParams();
@@ -65,10 +66,11 @@ export default function StudentDetails() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const totalBikedAmount = student?.rides?.reduce(
+    (acc, ride) => acc + (ride.distance || 0),
+    0
+  ) || 0;
 
-  const totalBikedAmount = student?.distance_to_school
-    ? student.distance_to_school * rideCount
-    : 0;
   if (!student) {
     return (
       <Box
@@ -248,7 +250,7 @@ export default function StudentDetails() {
             <Box sx={{ textAlign: "center" }}>
               <Bike size={32} color="#2E9B6B" />
               <Typography variant="body2" color="text.secondary">
-                35 kg CO2 Saved
+                {calculateCO2Saved(totalBikedAmount).toFixed(1)} kg CO2 Saved
               </Typography>
             </Box>
             <Typography variant="h6">=</Typography>
@@ -261,7 +263,7 @@ export default function StudentDetails() {
                 />
               </Box>
               <Typography variant="body2" color="text.secondary">
-                1,400 Trees planted
+                {calculateTreesEquivalent(totalBikedAmount).toFixed(0)} Trees planted
               </Typography>
             </Box>
           </Box>
