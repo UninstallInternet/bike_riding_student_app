@@ -94,12 +94,13 @@ export default function StudentDashboard() {
     const studentData = await studentWithRidesQuery(session.user.id);
     if (studentData?.rides) {
       const filteredRides = studentData.rides.filter((ride: Rides) => {
+        if (!ride.ride_date) return false;
         const rideDate = new Date(ride.ride_date);
         return rideDate.getMonth() === month && rideDate.getFullYear() === year;
       });
 
       const rideDays = filteredRides.map((ride: Rides) => ({
-        day: new Date(ride.ride_date).getDate(),
+        day: new Date(ride.ride_date!).getDate(),
         id: ride.id,
       }));
 

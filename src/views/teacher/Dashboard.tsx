@@ -61,6 +61,7 @@ export default function TeacherDashboard() {
   const [showManage, setShowManage] = useState(false);
   const [showExportPanel, setShowExportPanel] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
 
   const studentsRef = useRef<Student[]>([]);
   const isSmallScreen = useMediaQuery("(max-width:440px)");
@@ -83,20 +84,21 @@ export default function TeacherDashboard() {
     maxRides: Infinity,
   });
 
-  const [teacher, setTeacher] = useState<Teacher | null>(null);
-
-
   useEffect(() => {
-    fetchStudents()
-      .then((data) => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchStudents();
         studentsRef.current = data;
         setFilteredStudents(data);
-        setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching students:", error);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    loadData();
     fetchTeacher().then((data) => setTeacher(data as Teacher));
   }, []);
 

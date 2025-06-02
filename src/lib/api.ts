@@ -65,37 +65,56 @@ export const fetchStudentsQrs = async () => {
   return data;
 }
 
-export const fetchStudents = async () => {
-  const { data, error } = await supabase.from("students").select(
-    `*,
-      rides (id, distance, ride_date)`
-  );
+export interface Ride {
+  id: string;
+  student_id: string;
+  distance: number;
+  ride_date: string;
+}
+
+export type Student = Database["public"]["Tables"]["students"]["Row"] & {
+  rides: Ride[];
+  totalDistance: number;
+  ride_count: number;
+};
+
+export const fetchStudents = async (): Promise<Student[]> => {
+  const { data: students, error } = await supabase
+    .from("students")
+    .select("*");
 
   if (error) {
-    console.error(error);
+    console.error("Error fetching students:", error);
     return [];
-  } else {
-    const studentsWithRidesAndDistance = data.map((student: Student) => {
-      const ride_count = student.rides.length;
-      const totalDistance = student.rides.reduce(
-        (sum: number, ride: Rides) => sum + (ride.distance ?? 0),
+  }
+
+  const studentsWithRides = await Promise.all(
+    students.map(async (student) => {
+      const { data: rides } = await supabase
+        .from("rides")
+        .select("*")
+        .eq("student_id", student.id);
+
+      const ride_count = rides?.length || 0;
+      const totalDistance = rides?.reduce(
+        (acc, ride) => acc + (ride.distance || 0),
         0
-      );
+      ) || 0;
+
       return {
         ...student,
+        rides: rides || [],
         ride_count,
-        totalDistance: parseFloat(totalDistance.toFixed(2)),
+        totalDistance,
       };
-    });
+    })
+  );
 
-    const sortedStudents = studentsWithRidesAndDistance.sort(
-      (a: Student & { totalDistance: number }, b: Student & { totalDistance: number }) => 
-        b.totalDistance - a.totalDistance
-    );
-
-    return sortedStudents;
-  }
+  return studentsWithRides.sort(
+    (a, b) => b.totalDistance - a.totalDistance
+  );
 };
+
 export const addStudent = async (student: Student) => {
   const { data, error } = await supabase
     .from("students")
@@ -109,6 +128,7 @@ export const addStudent = async (student: Student) => {
 
   return data;
 };
+
 export const fetchTeacher = async () => {
   const {
     data: { user },
@@ -383,6 +403,7 @@ export const studentWithRidesQuery = async (id: string) => {
 
   return data;
 };
+
 export const fetchRides = async (studentId: string): Promise<Rides[]> => {
   const { data, error } = await supabase
     .from("rides")
@@ -492,7 +513,6 @@ export type DetailedRide = {
 
 export type StudentAwards = Awaited<ReturnType<typeof fetchStudentBadges>>;
 
-export type Student = Database["public"]["Tables"]["students"]["Row"];
 export type Teacher = Database["public"]["Tables"]["teachers"]["Row"];
 export type Badge = Database["public"]["Tables"]["awards"]["Row"];
 export type Rides = Database["public"]["Tables"]["rides"]["Row"];

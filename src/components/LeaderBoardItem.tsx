@@ -1,10 +1,9 @@
-
 import { Typography, Avatar, Box, styled } from "@mui/material";
 import { theme } from "../theme/theme";
 
 interface LeaderboardItemProps {
   user: {
-    profile_pic_url: string | undefined;
+    profile_pic_url: string | null | undefined;
     id: string;
     name: string;
     totalDistance: number;

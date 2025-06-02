@@ -1,7 +1,3 @@
-export interface LeaderboardUser {
-    profile_pic_url: string | undefined;
-    id: string;
-    name: string;
-    totalDistance: number;
-    ride_count: number;
-  }
+import { Student } from "./api";
+
+export type LeaderboardUser = Pick<Student, "id" | "name" | "profile_pic_url" | "totalDistance" | "ride_count">;
